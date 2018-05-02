@@ -25,7 +25,7 @@ impl Prompt {
 
 #[test]
 fn test_set_prompt() {
-    let prompt = Prompt::new(String::from("sytherax% "));
+    let mut prompt = Prompt::new(String::from("sytherax% "));
     assert!(prompt.get_prompt().as_str() == "sytherax% ");
 
     prompt.set_prompt(String::from("swoorup% "));
