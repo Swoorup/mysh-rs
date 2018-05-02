@@ -6,12 +6,12 @@ enum Token <'a> {
     VarString(&'a str), // string slice representing commands, parameters to commands, etc
 }
 
-struct LexicalAnalyzer <'a> {
-    token_list: LinkedList<Token>,
+pub struct LexicalAnalyzer <'a> {
+    token_list: LinkedList<Token<'a>>,
 }
 
-impl LexicalAnalyzer {
-    pub fn new() -> LexicalAnalyzer {
+impl <'a> LexicalAnalyzer <'a> {
+    pub fn new() -> LexicalAnalyzer<'a> {
         LexicalAnalyzer {
             token_list: LinkedList::new(), 
         }
