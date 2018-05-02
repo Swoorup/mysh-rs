@@ -22,12 +22,15 @@ impl <'a> LexicalAnalyzer <'a> {
 
         loop {
             match it.peek() {
-                Some((i, ch)) => match ch {
-                    '\t' => println!("Found tab character"),
-                    ' '  => println!("Found whitespace"),
+                Some(&(i, ch)) => match ch {
+                    '\t' => println!("Found tab character at {}", i),
+                    ' '  => println!("Found whitespace at {}", i),
                     '"'  => {
-                        let end_pos = it.position(|(_, ch)| ch == '"').unwrap();
-                        self.token_list.push_back(Token::VarString(&string[*i..end_pos]));
+                        // extract text in between quotes
+                        it.next();
+                        let c = it.position(|(_, ch)| ch == '"').unwrap();
+                        let (start, end) = (i+1, i+c+1);
+                        self.token_list.push_back(Token::VarString(&string[start..end]));
                         println!("Found string literal: {:?}", self.token_list);
                     }
                     _    => (),
@@ -41,7 +44,7 @@ impl <'a> LexicalAnalyzer <'a> {
 
 #[test]
 fn test_analyzer() {
-    let string = String::from("Hey sexy lady, you are \"ugly\"");
+    let string = String::from("Hey sexy lady, you are \"ugly\" \"jk\"");
     let mut lexer = LexicalAnalyzer::new();
     lexer.analyze(&string);
 }
