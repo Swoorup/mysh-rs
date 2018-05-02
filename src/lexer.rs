@@ -41,7 +41,7 @@ impl <'a> LexicalAnalyzer <'a> {
 
 #[test]
 fn test_analyzer() {
-    let string = String::from("Hey sexy lady");
+    let string = String::from("Hey sexy lady, you are \"ugly\"");
     let mut lexer = LexicalAnalyzer::new();
     lexer.analyze(&string);
 }
