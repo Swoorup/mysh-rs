@@ -14,7 +14,6 @@ fn ex_command(cmd: String) {
 
 fn main() {
     let prompt = Prompt::new(String::from("swoorup % "));
-    let mut lexer = LexicalAnalyzer::new();
 
     loop {
         print!("{}", prompt.get_prompt());
@@ -24,8 +23,11 @@ fn main() {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
 
-        // put it to lexer
-        lexer.analyze(&input);
+        { 
+            // put it to lexer
+            let mut lexer = LexicalAnalyzer::new();
+            lexer.analyze(&input);
+        }
 
         ex_command(input);
     }

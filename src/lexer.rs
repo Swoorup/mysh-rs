@@ -17,20 +17,31 @@ impl <'a> LexicalAnalyzer <'a> {
         }
     }
 
-    pub fn analyze(&mut self, string: &String) {
-        let mut it = string.chars().enumerate();
+    pub fn analyze(&mut self, string: &'a String) {
+        let mut it = string.chars().enumerate().peekable();
 
         loop {
-            match it.next() {
-                Some((i, ch)) => println!("Found {} at {}", ch, i),
+            match it.peek() {
+                Some((i, ch)) => match ch {
+                    '\t' => println!("Found tab character"),
+                    ' '  => println!("Found whitespace"),
+                    '"'  => {
+                        let end_pos = it.position(|(_, ch)| ch == '"').unwrap();
+                        self.token_list.push_back(Token::VarString(&string[*i..end_pos]));
+                        println!("Found string literal: {:?}", self.token_list);
+                    }
+                    _    => (),
+                }
                 None => break,
             }
+            it.next();
         }
     }
 }
 
 #[test]
 fn test_analyzer() {
+    let string = String::from("Hey sexy lady");
     let mut lexer = LexicalAnalyzer::new();
-    lexer.analyze(&String::from("Hey sexy lady"));
+    lexer.analyze(&string);
 }
