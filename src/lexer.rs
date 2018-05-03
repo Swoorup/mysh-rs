@@ -62,8 +62,11 @@ impl <'a> LexicalAnalyzer <'a> {
                         let remaining_str = &string[i..];
                         match starts_with_symbol(remaining_str) {
                             Some(s) => {
+                                let symbol_length = s.len();
                                 self.token_list.push_back(Token::Symbols(String::from(s)));
-                                // it.skip(s.len());
+                                for _ in 0..symbol_length {
+                                    it.next();
+                                }
                             }
                             None => (),
                         }
