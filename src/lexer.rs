@@ -24,19 +24,9 @@ fn begins_with_symbol(line: &str) -> Option<String> {
     None
 }
 
-fn is_symbol(it: &mut Peekable<Enumerate<Chars>>) -> Option<String> {
-    match it.peek() {
-        Some(&(_, ch)) => {
-           let result = SYMBOLS.binary_search_by(|probe| probe.cmp(&ch.to_string().as_str())); 
-        }
-        None => (),
-    }
-
-    None
-}
-
 #[derive(Debug)]
 enum Token <'a> {
+    WhiteSpace,
     Symbols(String), // i.e ';', '&', etc
     VarString(&'a str), // string slice representing commands, parameters to commands, etc
 }
@@ -54,28 +44,32 @@ impl <'a> LexicalAnalyzer <'a> {
 
     pub fn analyze(&mut self, string: &'a String) {
         let mut it = string.chars().enumerate().peekable();
-        let mut bInStrToken = false;
 
         loop {
             match it.peek() {
                 Some(&(i, ch)) => match ch {
-                    '\t' | ' ' => println!("Found character at {}", i),
-                    q_chr @ '"' | q_chr @ '\''  => {
+                    '\t' | ' ' => {
+                        // ignore if last token was whitespace
+                        match self.token_list.back() {
+                            Some(&Token::WhiteSpace) => (),
+                            _ => self.token_list.push_back(Token::WhiteSpace),
+                        }
+                    }
+                    '"' | '\''  => {
                         // extract string literal in between quotes
-                        println!(": {}", ch);
                         it.next();
-                        println!(": {}", ch);
-                        let c = it.position(|(_, ch)| ch == q_chr).unwrap();
+                        let c = it.position(|(_, _ch)| _ch == ch).unwrap();
                         let (start, end) = (i+1, i+c+1);
                         self.token_list.push_back(Token::VarString(&string[start..end]));
-                        println!("Found string literal: {:?}", self.token_list);
                     }
-                    _    => (),
+                    _    => {
+                    },
                 }
                 None => break,
             }
             it.next();
         }
+        println!("Token list: {:?}", self.token_list);
     }
 }
 
