@@ -19,16 +19,17 @@ impl <'a> LexicalAnalyzer <'a> {
 
     pub fn analyze(&mut self, string: &'a String) {
         let mut it = string.chars().enumerate().peekable();
+        let mut bInStrToken = false;
 
         loop {
             match it.peek() {
                 Some(&(i, ch)) => match ch {
-                    '\t' => println!("Found tab character at {}", i),
-                    ' '  => println!("Found whitespace at {}", i),
-                    '"'  => {
-                        // extract text in between quotes
+                    '\t' | ' ' => println!("Found character at {}", i),
+                    '\\' => 
+                    q_chr @ '"' | q_chr @ '\''  => {
+                        // extract string literal in between quotes
                         it.next();
-                        let c = it.position(|(_, ch)| ch == '"').unwrap();
+                        let c = it.position(|(_, ch)| ch == q_chr).unwrap();
                         let (start, end) = (i+1, i+c+1);
                         self.token_list.push_back(Token::VarString(&string[start..end]));
                         println!("Found string literal: {:?}", self.token_list);
