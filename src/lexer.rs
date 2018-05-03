@@ -11,19 +11,20 @@ lazy_static! {
     };
 }
 
-fn starts_with_symbol(line: &str) -> Option<String> {
-    for symbol in SYMBOLS.iter() {
-        if line.starts_with(symbol) {
-            return Some(String::from(*symbol));
-        }
-    }
-    None
+fn starts_with_symbol(line: &str) -> Option<&'static str> {
+    SYMBOLS.iter().find(|sym| line.starts_with(sym)).map(|&sym| sym)
+    // for symbol in SYMBOLS.iter() {
+    //     if line.starts_with(symbol) {
+    //         return Some(symbol);
+    //     }
+    // }
+    // None
 }
 
 #[derive(Debug)]
 enum Token <'a> {
     WhiteSpace,
-    Symbols(String), // i.e ';', '&', etc
+    Symbols(&'static str), // i.e ';', '&', etc
     VarString(&'a str), // string slice representing commands, parameters to commands, etc
 }
 
@@ -40,6 +41,11 @@ impl <'a> LexicalAnalyzer <'a> {
 
     pub fn tokenize(&mut self, string: &'a str) {
         let mut it = string.chars().enumerate().peekable();
+        let mut is_in_string = false;
+        // let terminate_and_push = || {
+        //     is_in_string = false;
+
+        // }
 
         while let Some((i, ch)) = it.next() {
             match ch {
@@ -59,13 +65,12 @@ impl <'a> LexicalAnalyzer <'a> {
                 _ => {
                     let remaining_str = &string[i..];
                     if let Some(s) = starts_with_symbol(remaining_str) {
-                        let symbol_length = s.len();
-                        self.token_list.push_back(Token::Symbols(String::from(s)));
-                        for _ in 0..symbol_length {
+                        self.token_list.push_back(Token::Symbols(s));
+                        for _ in 0..s.len(){
                             it.next();
                         }
                     } else {
-                        println!("{}", &remaining_str);
+                        is_in_string = true;
                     }
                 },
             } 
@@ -75,7 +80,8 @@ impl <'a> LexicalAnalyzer <'a> {
 
 #[test]
 fn test_analyzer() {
-    let string = String::from("Hello World, you are \"sometimes\" 'ok' && sometimes not!!!");
+    let string = "Hello World, you are \"sometimes\" 'ok' && sometimes not!!!";
+    println!("String: {}", string);
     let mut lexer = LexicalAnalyzer::new();
     lexer.tokenize(&string);
     println!("Token list: {:?}", lexer.token_list);
