@@ -15,7 +15,7 @@ fn starts_with_symbol(line: &str) -> Option<&'static str> {
     SYMBOLS.iter().find(|&&sym| line.starts_with(sym)).map(|sym| *sym)
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 enum Token <'a> {
     WhiteSpace,
     Symbols(&'static str), // i.e ';', '&', etc
@@ -45,9 +45,8 @@ impl <'a> LexicalAnalyzer <'a> {
             match ch {
                 '\t' | ' ' => {
                     // ignore if last token was whitespace
-                    match self.token_list.back() {
-                        Some(&Token::WhiteSpace) => (),
-                        _ => self.token_list.push_back(Token::WhiteSpace),
+                    if self.token_list.back() != Some(&Token::WhiteSpace) { 
+                        self.token_list.push_back(Token::WhiteSpace);
                     }
                 }
                 '"' | '\'' => {
