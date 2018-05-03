@@ -68,9 +68,8 @@ impl <'a> LexicalAnalyzer <'a> {
                                     it.next();
                                 }
                             }
-                            None => (),
+                            None => println!("{}", &remaining_str),
                         }
-                        println!("{}", &remaining_str);
                     },
                 }
                 None => break,
@@ -78,7 +77,6 @@ impl <'a> LexicalAnalyzer <'a> {
             it.next();
         }
 
-        println!("Token list: {:?}", self.token_list);
     }
 }
 
@@ -87,6 +85,7 @@ fn test_analyzer() {
     let string = String::from("Hello World, you are \"sometimes\" 'ok' && sometimes not!!!");
     let mut lexer = LexicalAnalyzer::new();
     lexer.tokenize(&string);
+    println!("Token list: {:?}", lexer.token_list);
 }
 
 #[test]
