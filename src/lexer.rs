@@ -9,7 +9,7 @@ lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
         let mut m = vec!["&&", ";", "&", "|", ">", ">>", "<", "<<", "||"];
     
-        // sort to allow longest match rule
+        // sort for longest match rule
         m.sort_by(|a, b| b.cmp(a));
         m
     };
@@ -42,7 +42,7 @@ impl <'a> LexicalAnalyzer <'a> {
         }
     }
 
-    pub fn analyze(&mut self, string: &'a String) {
+    pub fn tokenize(&mut self, string: &'a str) {
         let mut it = string.chars().enumerate().peekable();
 
         loop {

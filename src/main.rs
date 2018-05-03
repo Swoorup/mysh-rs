@@ -28,7 +28,7 @@ fn main() {
         { 
             // put it to lexer
             let mut lexer = LexicalAnalyzer::new();
-            lexer.analyze(&input);
+            lexer.tokenize(&input);
         }
 
         ex_command(input);
