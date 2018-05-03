@@ -12,13 +12,7 @@ lazy_static! {
 }
 
 fn starts_with_symbol(line: &str) -> Option<&'static str> {
-    SYMBOLS.iter().find(|sym| line.starts_with(sym)).map(|&sym| sym)
-    // for symbol in SYMBOLS.iter() {
-    //     if line.starts_with(symbol) {
-    //         return Some(symbol);
-    //     }
-    // }
-    // None
+    SYMBOLS.iter().find(|&&sym| line.starts_with(sym)).map(|sym| *sym)
 }
 
 #[derive(Debug)]
