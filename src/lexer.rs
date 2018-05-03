@@ -1,8 +1,4 @@
 use std::collections::LinkedList;
-use std::iter::Enumerate;
-use std::iter::Iterator;
-use std::iter::Peekable;
-use std::str::Chars;
 use std::vec;
 
 lazy_static! {
@@ -15,7 +11,7 @@ lazy_static! {
     };
 }
 
-fn begins_with_symbol(line: &str) -> Option<String> {
+fn starts_with_symbol(line: &str) -> Option<String> {
     for symbol in SYMBOLS.iter() {
         if line.starts_with(symbol) {
             return Some(String::from(*symbol));
@@ -55,35 +51,45 @@ impl <'a> LexicalAnalyzer <'a> {
                             _ => self.token_list.push_back(Token::WhiteSpace),
                         }
                     }
-                    '"' | '\''  => {
+                    '"' | '\'' => {
                         // extract string literal in between quotes
                         it.next();
                         let c = it.position(|(_, _ch)| _ch == ch).unwrap();
                         let (start, end) = (i+1, i+c+1);
                         self.token_list.push_back(Token::VarString(&string[start..end]));
                     }
-                    _    => {
+                    _ => {
+                        let remaining_str = &string[i..];
+                        match starts_with_symbol(remaining_str) {
+                            Some(s) => {
+                                self.token_list.push_back(Token::Symbols(String::from(s)));
+                                // it.skip(s.len());
+                            }
+                            None => (),
+                        }
+                        println!("{}", &remaining_str);
                     },
                 }
                 None => break,
             }
             it.next();
         }
+
         println!("Token list: {:?}", self.token_list);
     }
 }
 
 #[test]
 fn test_analyzer() {
-    let string = String::from("Hey sexy lady, you are \"ugly\" \"jk\"");
+    let string = String::from("Hello World, you are \"sometimes\" 'ok' && sometimes not!!!");
     let mut lexer = LexicalAnalyzer::new();
-    lexer.analyze(&string);
+    lexer.tokenize(&string);
 }
 
 #[test]
 fn test_symbol_presence() {
     let string = "<< Help";
-    match begins_with_symbol(string) {
+    match starts_with_symbol(string) {
         Some(x) => println!("{}", x),
         None => (),
     }
