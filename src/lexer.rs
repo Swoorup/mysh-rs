@@ -21,7 +21,7 @@ fn starts_with_symbol(line: &str) -> Option<&'static str> {
 #[derive(PartialEq, Debug)]
 enum Token<'a> {
     WhiteSpace,
-    Symbols(&'static str), // i.e ';', '&', etc
+    Symbol(&'static str), // i.e ';', '&', etc
     VarString(&'a str),    // string slice representing commands, parameters to commands, etc
 }
 
@@ -36,6 +36,13 @@ impl<'a> LexicalAnalyzer<'a> {
         }
     }
 
+    // remove duplicate whitespaces and flatten glob characters
+    fn flatten(&mut self) {
+        // loop {
+        //     self.token_list.iter_mut()
+        // }
+    }
+
     pub fn tokenize(&mut self, string: &'a str) {
         let mut it = string.chars().enumerate().peekable();
 
@@ -44,26 +51,23 @@ impl<'a> LexicalAnalyzer<'a> {
 
         loop {
             let mut omit_current_ch_for_capture = true;
+            let mut current_token: Option<Token> = None;
 
             if let Some((i, ch)) = it.next() {
                 match ch {
                     '\t' | ' ' => {
-                        // ignore if last token was whitespace
-                        // if self.token_list.back() != Some(&Token::WhiteSpace) {
-                        self.token_list.push_back(Token::WhiteSpace);
-                        // }
+                        current_token = Some(Token::WhiteSpace);
                     }
                     '"' | '\'' => {
                         // extract string literal in between quotes
                         let c = it.position(|(_, _ch)| _ch == ch).unwrap();
                         let (start, end) = (i + 1, i + c + 1);
-                        self.token_list
-                            .push_back(Token::VarString(&string[start..end]));
+                        current_token = Some(Token::VarString(&string[start..end]));
                     }
                     _ => {
                         let remaining_str = &string[i..];
                         if let Some(s) = starts_with_symbol(remaining_str) {
-                            self.token_list.push_back(Token::Symbols(s));
+                            current_token = Some(Token::Symbol(s));
                             for _ in 0..s.len() {
                                 it.next();
                             }
@@ -80,21 +84,29 @@ impl<'a> LexicalAnalyzer<'a> {
                 if capturing && omit_current_ch_for_capture {
                     capturing = false;
                     let end = i;
-                    if let Some(previous_token) = self.token_list.pop_back() {
-                        self.token_list
-                            .push_back(Token::VarString(&string[start..end]));
-                        self.token_list.push_back(previous_token);
-                    } else {
-                        self.token_list
-                            .push_back(Token::VarString(&string[start..end]));
-                    }
+                    self.token_list
+                        .push_back(Token::VarString(&string[start..end]));
                 }
-                if capturing && it.peek().is_none() {
-                    capturing = false;
+
+                match current_token {
+                    Some(Token::WhiteSpace) => {
+                        // ignore duplicates whitespace
+                        if !self.token_list.is_empty()
+                            && self.token_list.back() != Some(&Token::WhiteSpace)
+                        {
+                            self.token_list.push_back(Token::WhiteSpace);
+                        }
+                    }
+                    Some(tok) => {
+                        self.token_list.push_back(tok);
+                    }
+                    None => (),
+                }
+            } else {
+                if capturing {
                     self.token_list
                         .push_back(Token::VarString(&string[start..]));
                 }
-            } else {
                 break;
             }
         }
@@ -103,7 +115,7 @@ impl<'a> LexicalAnalyzer<'a> {
 
 #[test]
 fn test_analyzer() {
-    let string = "Hello World, you are \"sometimes\" 'ok' && sometimes not!!!";
+    let string = "  echo in void & sleep 1000h; echo '^&@#&*; I wasted my life'";
     println!("String: {}", string);
     let mut lexer = LexicalAnalyzer::new();
     lexer.tokenize(&string);
