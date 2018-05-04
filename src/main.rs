@@ -6,13 +6,11 @@ use std::io::Write;
 
 mod prompt;
 mod lexer;
+mod parser;
 
 use prompt::Prompt;
 use lexer::LexicalAnalyzer;
-
-fn ex_command(cmd: String) {
-    print!("You wrote {}", cmd)
-}
+use parser::Parser;
 
 fn main() {
     let prompt = Prompt::new(String::from("swoorup % "));
@@ -25,12 +23,11 @@ fn main() {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
 
-        { 
-            // put it to lexer
-            let mut lexer = LexicalAnalyzer::new();
-            lexer.tokenize(&input);
-        }
+        // put it to lexer
+        let mut lexer = LexicalAnalyzer::new();
+        lexer.tokenize(&input);
 
-        ex_command(input);
+        // use iter
+        let mut parser = Parser::new();
     }
 }
