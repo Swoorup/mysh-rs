@@ -5,7 +5,7 @@ lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
         let mut m = vec!["&&", ";", "&", "|", ">", ">>", "<", "<<", "||"];
 
-        // sort for longest match rule
+        // reverse sort for longest match rule
         m.sort_by(|a, b| b.cmp(a));
         m
     };
@@ -36,10 +36,17 @@ impl<'a> LexicalAnalyzer<'a> {
         }
     }
 
-    // remove duplicate whitespaces and flatten glob characters
+    // join literals, flatten glob characters
     fn flatten(&mut self) {
-        // loop {
-        //     self.token_list.iter_mut()
+        // let mut it = self.token_list.iter_mut();
+
+        // while let Some(token) = it.next() {
+        //     match token {
+        //         t => {
+        //             self.token_list.pop_back();
+        //             println!("Token {:?}", t);
+        //         }
+        //     }
         // }
     }
 
@@ -50,10 +57,10 @@ impl<'a> LexicalAnalyzer<'a> {
         let mut capturing = false;
 
         loop {
-            let mut omit_current_ch_for_capture = true;
-            let mut current_token: Option<Token> = None;
-
             if let Some((i, ch)) = it.next() {
+                let mut omit_current_ch_for_capture = true;
+                let mut current_token: Option<Token> = None;
+
                 match ch {
                     '\t' | ' ' => {
                         current_token = Some(Token::WhiteSpace);
@@ -68,7 +75,7 @@ impl<'a> LexicalAnalyzer<'a> {
                         let remaining_str = &string[i..];
                         if let Some(s) = starts_with_symbol(remaining_str) {
                             current_token = Some(Token::Symbol(s));
-                            for _ in 0..s.len() {
+                            for _ in 1..s.len() {
                                 it.next();
                             }
                         } else {
@@ -110,23 +117,36 @@ impl<'a> LexicalAnalyzer<'a> {
                 break;
             }
         }
+
+        self.flatten();
     }
 }
 
 #[test]
 fn test_analyzer() {
-    let string = "  echo in void & sleep 1000h; echo '^&@#&*; I wasted my life'";
+    let string = "  echo void & sleep 1000h; echo '%^;'";
     println!("String: {}", string);
     let mut lexer = LexicalAnalyzer::new();
     lexer.tokenize(&string);
-    println!("Token list: {:?}", lexer.token_list);
+
+    let mut it = lexer.token_list.iter();
+    assert!(it.next() == Some(&Token::VarString("echo")));
+    assert!(it.next() == Some(&Token::WhiteSpace));
+    assert!(it.next() == Some(&Token::VarString("void")));
+    assert!(it.next() == Some(&Token::WhiteSpace));
+    assert!(it.next() == Some(&Token::Symbol("&")));
+    assert!(it.next() == Some(&Token::WhiteSpace));
+    assert!(it.next() == Some(&Token::VarString("sleep")));
+    assert!(it.next() == Some(&Token::WhiteSpace));
+    assert!(it.next() == Some(&Token::VarString("1000h")));
+    assert!(it.next() == Some(&Token::Symbol(";")));
+    assert!(it.next() == Some(&Token::WhiteSpace));
+    assert!(it.next() == Some(&Token::VarString("echo")));
 }
 
 #[test]
 fn test_symbol_presence() {
     let string = "<< Help";
-    match starts_with_symbol(string) {
-        Some(x) => println!("{}", x),
-        None => (),
-    }
+    assert!(starts_with_symbol(string) == Some("<<"));
+    assert!(starts_with_symbol(&string[2..]) == None);
 }
