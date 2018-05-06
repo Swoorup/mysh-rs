@@ -3,7 +3,7 @@ use std::vec;
 
 lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
-        let mut m = vec!["&&", ";", "&", "|", ">", ">>", "<", "<<", "||"];
+        let mut m = vec!["&&", ";", "&", "|", ">", ">>", "<", "<<", "||", "\n"];
 
         // reverse sort for longest match rule
         m.sort_by(|a, b| b.cmp(a));
