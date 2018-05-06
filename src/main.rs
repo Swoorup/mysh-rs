@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![feature(if_while_or_patterns)]
 use std::io;
 use std::io::Write;
 
