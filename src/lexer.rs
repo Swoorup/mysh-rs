@@ -48,7 +48,7 @@ impl<'a> LexicalAnalyzer<'a> {
                 {
                     let new_token = String::from(s.to_owned() + right);
                     let slice: &str = &new_token[..];
-                    self.token_list[i] = Token::String(slice);
+                    self.token_list[i] = Token::VarString(slice);
                     self.token_list.remove(i+1);
                 }
             } else {
