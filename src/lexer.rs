@@ -1,4 +1,4 @@
-use std::collections::LinkedList;
+use std::collections::VecDeque;
 use std::vec;
 
 lazy_static! {
@@ -27,13 +27,13 @@ pub enum Token<'a> {
 }
 
 pub struct LexicalAnalyzer<'a> {
-    pub token_list: LinkedList<Token<'a>>, // TODO: turn into iter
+    pub token_list: VecDeque<Token<'a>>, // TODO: turn into iter
 }
 
 impl<'a> LexicalAnalyzer<'a> {
     pub fn new() -> LexicalAnalyzer<'a> {
         LexicalAnalyzer {
-            token_list: LinkedList::new(),
+            token_list: VecDeque::new(),
         }
     }
 

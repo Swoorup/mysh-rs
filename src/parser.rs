@@ -1,4 +1,4 @@
-use std::collections::LinkedList;
+use std::collections::VecDeque;
 
 use lexer::Token;
 
@@ -57,9 +57,9 @@ impl<'a> Parser<'a> {
         Parser { ast: None }
     }
 
-    pub fn parse(&mut self, token_list: LinkedList<Token>) -> Result<(), String> {
+    pub fn parse(&mut self, token_list: VecDeque<Token>) -> Result<(), String> {
         for i in token_list {
-            println!("{:?}", i);
+            // println!("{:?}", i);
         }
         Ok(())
     }
