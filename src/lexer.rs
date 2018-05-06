@@ -19,9 +19,10 @@ fn starts_with_symbol(line: &str) -> Option<&'static str> {
 }
 
 #[derive(PartialEq, Debug)]
-enum Token<'a> {
+pub enum Token<'a> {
     WhiteSpace,
     Symbol(&'static str), // i.e ';', '&', etc
+    QuotedString(&'a str),
     VarString(&'a str),    // string slice representing commands, parameters to commands, etc
 }
 
@@ -69,7 +70,7 @@ impl<'a> LexicalAnalyzer<'a> {
                         // extract string literal in between quotes
                         let c = it.position(|(_, _ch)| _ch == ch).unwrap();
                         let (start, end) = (i + 1, i + c + 1);
-                        current_token = Some(Token::VarString(&string[start..end]));
+                        current_token = Some(Token::QuotedString(&string[start..end]));
                     }
                     _ => {
                         let remaining_str = &string[i..];
