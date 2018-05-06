@@ -27,7 +27,7 @@ pub enum Token<'a> {
 }
 
 pub struct LexicalAnalyzer<'a> {
-    token_list: LinkedList<Token<'a>>,
+    pub token_list: LinkedList<Token<'a>>, // TODO: turn into iter
 }
 
 impl<'a> LexicalAnalyzer<'a> {
