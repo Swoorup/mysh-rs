@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::vec;
+use std::borrow::Cow;
 
 lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
@@ -22,8 +23,8 @@ fn starts_with_symbol(line: &str) -> Option<&'static str> {
 pub enum Token<'a> {
     WhiteSpace,
     Symbol(&'static str), // i.e ';', '&', etc
-    QuotedString(&'a str),
-    VarString(&'a str), // string slice representing commands, parameters to commands, etc
+    QuotedString(Cow<'a, str>),
+    VarString(Cow<'a, str>), // string slice representing commands, parameters to commands, etc
 }
 
 pub struct LexicalAnalyzer<'a> {
@@ -43,14 +44,11 @@ impl<'a> LexicalAnalyzer<'a> {
 
         let mut i = 0;
         while i != self.token_list.len() - 1 {
-            if let Token::QuotedString(s) | Token::VarString(s) = self.token_list[i] {
-                if let Token::QuotedString(right) | Token::VarString(right) = self.token_list[i + 1]
-                {
-                    let new_token = String::from(s.to_owned() + right);
-                    let slice: &str = &new_token[..];
-                    self.token_list[i] = Token::VarString(slice);
-                    self.token_list.remove(i+1);
-                }
+            if let Token::QuotedString(s) | Token::VarString(s) = &mut self.token_list[i] {
+                // if let Token::QuotedString(right) | Token::VarString(right) = &mut self.token_list[i + 1]
+                // {
+                & s.into_owned();
+                // }
             } else {
                 i += 1;
             }
@@ -76,7 +74,7 @@ impl<'a> LexicalAnalyzer<'a> {
                         // extract string literal in between quotes
                         let c = it.position(|(_, _ch)| _ch == ch).unwrap();
                         let (start, end) = (i + 1, i + c + 1);
-                        current_token = Some(Token::QuotedString(&string[start..end]));
+                        current_token = Some(Token::QuotedString(Cow::Borrowed(&string[start..end])));
                     }
                     _ => {
                         let remaining_str = &string[i..];
@@ -99,7 +97,7 @@ impl<'a> LexicalAnalyzer<'a> {
                     capturing = false;
                     let end = i;
                     self.token_list
-                        .push_back(Token::VarString(&string[start..end]));
+                        .push_back(Token::VarString(Cow::Borrowed(&string[start..end])));
                 }
 
                 match current_token {
@@ -119,7 +117,7 @@ impl<'a> LexicalAnalyzer<'a> {
             } else {
                 if capturing {
                     self.token_list
-                        .push_back(Token::VarString(&string[start..]));
+                        .push_back(Token::VarString(Cow::Borrowed(&string[start..])));
                 }
                 break;
             }
