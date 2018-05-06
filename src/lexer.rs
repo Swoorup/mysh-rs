@@ -39,11 +39,20 @@ impl<'a> LexicalAnalyzer<'a> {
 
     // join literals, flatten glob characters
     fn flatten(&mut self) {
-        while let Some(token) = self.token_list.iter().next() {
-            match token {
-                t => {
-                    println!("Token {:?}", t);
+        // join literals
+
+        let mut i = 0;
+        while i != self.token_list.len() - 1 {
+            if let Token::QuotedString(s) | Token::VarString(s) = self.token_list[i] {
+                if let Token::QuotedString(right) | Token::VarString(right) = self.token_list[i + 1]
+                {
+                    let new_token = String::from(s.to_owned() + right);
+                    let slice: &str = &new_token[..];
+                    self.token_list[i] = Token::String(slice);
+                    self.token_list.remove(i+1);
                 }
+            } else {
+                i += 1;
             }
         }
     }
