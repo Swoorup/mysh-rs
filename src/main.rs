@@ -29,5 +29,9 @@ fn main() {
 
         // use iter
         let mut parser = Parser::new();
+        match parser.parse(lexer.token_list) {
+            Ok(_) => (),
+            Err(e) => println!("Error in parsing: {}", e),
+        }
     }
 }

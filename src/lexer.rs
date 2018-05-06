@@ -23,7 +23,7 @@ pub enum Token<'a> {
     WhiteSpace,
     Symbol(&'static str), // i.e ';', '&', etc
     QuotedString(&'a str),
-    VarString(&'a str),    // string slice representing commands, parameters to commands, etc
+    VarString(&'a str), // string slice representing commands, parameters to commands, etc
 }
 
 pub struct LexicalAnalyzer<'a> {
@@ -39,16 +39,13 @@ impl<'a> LexicalAnalyzer<'a> {
 
     // join literals, flatten glob characters
     fn flatten(&mut self) {
-        // let mut it = self.token_list.iter_mut();
-
-        // while let Some(token) = it.next() {
-        //     match token {
-        //         t => {
-        //             self.token_list.pop_back();
-        //             println!("Token {:?}", t);
-        //         }
-        //     }
-        // }
+        while let Some(token) = self.token_list.iter().next() {
+            match token {
+                t => {
+                    println!("Token {:?}", t);
+                }
+            }
+        }
     }
 
     pub fn tokenize(&mut self, string: &'a str) {

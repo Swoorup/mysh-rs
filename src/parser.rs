@@ -40,7 +40,11 @@ fn test_syntax_tree() {
     let mut syntaxtree = SyntaxTree::new(&Token::WhiteSpace);
     syntaxtree.insert_left(&Token::WhiteSpace);
     syntaxtree.insert_right(&Token::WhiteSpace);
-    syntaxtree.right.as_mut().unwrap().insert_left(&Token::WhiteSpace);
+    syntaxtree
+        .right
+        .as_mut()
+        .unwrap()
+        .insert_left(&Token::WhiteSpace);
     println!("{:?}", syntaxtree);
 }
 
@@ -53,7 +57,10 @@ impl<'a> Parser<'a> {
         Parser { ast: None }
     }
 
-    pub fn parse(token_list: LinkedList<Token>) -> Result<(), String> {
+    pub fn parse(&mut self, token_list: LinkedList<Token>) -> Result<(), String> {
+        for i in token_list {
+            println!("{:?}", i);
+        }
         Ok(())
     }
 }
