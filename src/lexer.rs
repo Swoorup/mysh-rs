@@ -44,13 +44,16 @@ impl<'a> LexicalAnalyzer<'a> {
 
         let mut i = 0;
         while i != self.token_list.len() {
-            if let Token::QuotedString(ref mut s) | Token::VarString(ref mut s) = self.token_list[i]
-            {
-                if let Token::QuotedString(ref mut right) | Token::VarString(ref mut right) =
-                    self.token_list[i + 1]
+            if let Token::QuotedString(_) | Token::VarString(_) = self.token_list[i] {
+                if let Token::QuotedString(_) | Token::VarString(_) = self.token_list[i + 1]
                 {
-                    s.to_mut().push_str(right);
-                    self.token_list.remove(i + 1);
+                    let m = self.token_list.remove(i + 1).unwrap();
+
+                    if let Token::QuotedString(m) | Token::VarString(m) = m {
+                        if let Token::QuotedString(ref mut s) | Token::VarString(ref mut s) = self.token_list[i] {
+                            s.to_mut().push_str(&m.to_owned());
+                        }
+                    }
                 } else {
                     i += 1;
                 }
