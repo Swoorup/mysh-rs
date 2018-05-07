@@ -63,7 +63,8 @@ impl<'a> LexicalAnalyzer<'a> {
             }
         }
 
-        self.token_list.retain(|tok| *tok != Token::WhiteSpace && *tok != Token::Symbol("\n"));
+        self.token_list
+            .retain(|tok| *tok != Token::WhiteSpace && *tok != Token::Symbol("\n"));
     }
 
     pub fn tokenize(&mut self, string: &'a str) {
@@ -78,6 +79,11 @@ impl<'a> LexicalAnalyzer<'a> {
                 let mut current_token: Option<Token> = None;
 
                 match ch {
+                    '\\' => {
+                        if let Some((_, ch)) = it.next() {
+                            current_token = Some(Token::VarString(Cow::Owned(ch.to_string())));
+                        }
+                    }
                     '\t' | ' ' => {
                         current_token = Some(Token::WhiteSpace);
                     }
