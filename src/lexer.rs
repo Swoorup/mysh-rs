@@ -1,6 +1,6 @@
+use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::vec;
-use std::borrow::Cow;
 
 lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
@@ -43,15 +43,16 @@ impl<'a> LexicalAnalyzer<'a> {
         // join literals
 
         let mut i = 0;
-        while i != self.token_list.len() - 1 {
-            if let Token::QuotedString(s) | Token::VarString(s) = &mut self.token_list[i] {
-                // if let Token::QuotedString(right) | Token::VarString(right) = &mut self.token_list[i + 1]
-                // {
-                & s.into_owned();
-                // }
+        if let Token::QuotedString(ref mut s) | Token::VarString(ref mut s) = self.token_list[i] {
+            if let Token::QuotedString(ref mut right) | Token::VarString(ref mut right) = self.token_list[i + 1]
+            {
+                s.to_mut().push_str(right);
+                self.token_list.remove(i+1);
             } else {
                 i += 1;
             }
+        } else {
+            i += 1;
         }
     }
 
@@ -74,7 +75,8 @@ impl<'a> LexicalAnalyzer<'a> {
                         // extract string literal in between quotes
                         let c = it.position(|(_, _ch)| _ch == ch).unwrap();
                         let (start, end) = (i + 1, i + c + 1);
-                        current_token = Some(Token::QuotedString(Cow::Borrowed(&string[start..end])));
+                        current_token =
+                            Some(Token::QuotedString(Cow::Borrowed(&string[start..end])));
                     }
                     _ => {
                         let remaining_str = &string[i..];
