@@ -43,16 +43,20 @@ impl<'a> LexicalAnalyzer<'a> {
         // join literals
 
         let mut i = 0;
-        if let Token::QuotedString(ref mut s) | Token::VarString(ref mut s) = self.token_list[i] {
-            if let Token::QuotedString(ref mut right) | Token::VarString(ref mut right) = self.token_list[i + 1]
+        while i != self.token_list.len() {
+            if let Token::QuotedString(ref mut s) | Token::VarString(ref mut s) = self.token_list[i]
             {
-                s.to_mut().push_str(right);
-                self.token_list.remove(i+1);
+                if let Token::QuotedString(ref mut right) | Token::VarString(ref mut right) =
+                    self.token_list[i + 1]
+                {
+                    s.to_mut().push_str(right);
+                    self.token_list.remove(i + 1);
+                } else {
+                    i += 1;
+                }
             } else {
                 i += 1;
             }
-        } else {
-            i += 1;
         }
     }
 
