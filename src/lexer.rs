@@ -51,29 +51,24 @@ impl<'a> LexicalAnalyzer<'a> {
             }
         }
 
-        // join literals
-
+        // stitch adjacent VarStrings
         let mut i = 0;
-        while i != self.token_list.len() {
-            if let Token::QuotedString(_) | Token::VarString(_) = self.token_list[i] {
-                if let Token::QuotedString(_) | Token::VarString(_) = self.token_list[i + 1] {
+        while i != self.token_list.len() - 1 {
+            match (&self.token_list[i], &self.token_list[i + 1]) {
+                (&Token::VarString(_), &Token::VarString(_)) => {
                     let m = self.token_list.remove(i + 1).unwrap();
 
-                    if let Token::QuotedString(m) | Token::VarString(m) = m {
-                        if let Token::QuotedString(ref mut s) | Token::VarString(ref mut s) =
-                            self.token_list[i]
-                        {
+                    if let Token::VarString(m) = m {
+                        if let Token::VarString(ref mut s) = self.token_list[i] {
                             s.to_mut().push_str(&m);
                         }
                     }
-                } else {
-                    i += 1;
                 }
-            } else {
-                i += 1;
+                _ => i += 1,
             }
         }
 
+        // remove newline and whitespace
         self.token_list
             .retain(|tok| *tok != Token::WhiteSpace && *tok != Token::Symbol("\n"));
     }
