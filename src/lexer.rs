@@ -40,6 +40,13 @@ impl<'a> LexicalAnalyzer<'a> {
 
     // join literals, flatten glob characters
     fn flatten(&mut self) {
+        // turn Token::QuotedString into Token::VarString
+        for tok in &mut self.token_list {
+            if let Token::QuotedString(s) = *tok {
+                *tok = Token::VarString(s);
+            }
+        }
+
         // join literals
 
         let mut i = 0;
