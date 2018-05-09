@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::VecDeque;
+use std::mem;
 use std::vec;
 
 lazy_static! {
@@ -41,9 +42,12 @@ impl<'a> LexicalAnalyzer<'a> {
     // join literals, flatten glob characters
     fn flatten(&mut self) {
         // turn Token::QuotedString into Token::VarString
-        for tok in &mut self.token_list {
-            if let Token::QuotedString(s) = *tok {
-                *tok = Token::VarString(s);
+        for tok in self.token_list.iter_mut() {
+            if let Token::QuotedString(_) = *tok {
+                let quoted_token = mem::replace(tok, Token::WhiteSpace);
+                if let Token::QuotedString(s) = quoted_token {
+                    *tok = Token::VarString(s);
+                }
             }
         }
 
