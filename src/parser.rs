@@ -149,20 +149,6 @@ fn test_simplecmd_1<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
 
 // test tokenlist production
 fn test_tokenlist<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
-    return if let Some(st) = test_tokenlist_1(token_list) {
-        Some(st)
-    } else if let Some(st) = test_tokenlist_2(token_list) {
-        Some(st)
-    } else {
-        None
-    };
-}
-//	<token> <token list>
-fn test_tokenlist_1<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
-    None
-}
-//	EMPTY
-fn test_tokenlist_2<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
     None
 }
 
