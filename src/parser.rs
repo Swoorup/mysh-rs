@@ -135,15 +135,6 @@ fn test_cmd_3<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
 
 // test simple cmd production
 fn test_simplecmd<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
-    return if let Some(st) = test_simplecmd_1(token_list) {
-        Some(st)
-    } else {
-        None
-    };
-}
-
-// <pathname> <token list>
-fn test_simplecmd_1<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
     None
 }
 
