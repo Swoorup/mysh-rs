@@ -28,6 +28,9 @@ pub enum Token<'a> {
     VarString(Cow<'a, str>), // string slice representing commands, parameters to commands, etc
 }
 
+pub trait TokenIter<'a>: Iterator<Item = &'a Token<'a>> + Clone {}
+impl<'a, T: Iterator<Item = &'a Token<'a>> + Clone> TokenIter<'a> for T {}
+
 impl<'a> Default for Token<'a> {
     fn default() -> Token<'a> {
         Token::WhiteSpace
@@ -45,7 +48,7 @@ impl<'a> Token<'a> {
 }
 
 pub struct LexicalAnalyzer<'a> {
-    token_list: VecDeque<Token<'a>>, 
+    token_list: VecDeque<Token<'a>>,
 }
 
 impl<'a> LexicalAnalyzer<'a> {
@@ -165,8 +168,8 @@ impl<'a> LexicalAnalyzer<'a> {
         self.flatten();
     }
 
-    pub fn token_iter(&self) -> impl Iterator<Item = &Token> { 
-        self.token_list.iter()
+    pub fn token_iter(&self) -> impl TokenIter {
+        self.token_list.iter().clone()
     }
 }
 
