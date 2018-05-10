@@ -1,4 +1,5 @@
 use lexer::Token;
+use lexer::TokenIter;
 
 #[derive(Debug)]
 struct SyntaxTree<'a> {
@@ -51,93 +52,93 @@ pub struct Parser<'a> {
 }
 
 //	test all command line production orderwise
-fn test_cmdline<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
-    return if let Some(st) = test_cmdline_1(token_list) {
+fn test_cmdline<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
+    return if let Some(st) = test_cmdline_1(token_iter.clone()) {
         Some(st)
-    } else if let Some(st) = test_cmdline_2(token_list) {
+    } else if let Some(st) = test_cmdline_2(token_iter.clone()) {
         Some(st)
-    } else if let Some(st) = test_cmdline_3(token_list) {
+    } else if let Some(st) = test_cmdline_3(token_iter.clone()) {
         Some(st)
-    } else if let Some(st) = test_cmdline_4(token_list) {
+    } else if let Some(st) = test_cmdline_4(token_iter.clone()) {
         Some(st)
-    } else if let Some(st) = test_cmdline_5(token_list) {
+    } else if let Some(st) = test_cmdline_5(token_iter.clone()) {
         Some(st)
     } else {
         None
     };
 }
 //	<job> ';' <command line>
-fn test_cmdline_1<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_cmdline_1<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 //	<job> ';'
-fn test_cmdline_2<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_cmdline_2<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 //	<job> '&' <command line>
-fn test_cmdline_3<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_cmdline_3<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 //	<job> '&'
-fn test_cmdline_4<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_cmdline_4<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 //	<job>
-fn test_cmdline_5<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_cmdline_5<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 
 // test all job production in order
-fn test_job<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
-    return if let Some(st) = test_job_1(token_list) {
+fn test_job<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
+    return if let Some(st) = test_job_1(token_iter.clone()) {
         Some(st)
-    } else if let Some(st) = test_job_2(token_list) {
+    } else if let Some(st) = test_job_2(token_iter.clone()) {
         Some(st)
     } else {
         None
     };
 }
 // <command> '|' <job>
-fn test_job_1<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_job_1<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 // <command>
-fn test_job_2<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_job_2<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 
 // test all command production orderwise
-fn test_cmd<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
-    return if let Some(st) = test_cmd_1(token_list) {
+fn test_cmd<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
+    return if let Some(st) = test_cmd_1(token_iter.clone()) {
         Some(st)
-    } else if let Some(st) = test_cmd_2(token_list) {
+    } else if let Some(st) = test_cmd_2(token_iter.clone()) {
         Some(st)
-    } else if let Some(st) = test_cmd_3(token_list) {
+    } else if let Some(st) = test_cmd_3(token_iter.clone()) {
         Some(st)
     } else {
         None
     };
 }
 //	<simple command> '<' <filename>
-fn test_cmd_1<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_cmd_1<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 //	<simple command> '>' <filename>
-fn test_cmd_2<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_cmd_2<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 //	<simple command>
-fn test_cmd_3<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_cmd_3<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 
 // test simple cmd production
-fn test_simplecmd<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_simplecmd<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 
 // test tokenlist production
-fn test_tokenlist<'a>(token_list: &[Token]) -> Option<SyntaxTree<'a>> {
+fn test_tokenlist<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     None
 }
 
@@ -146,9 +147,13 @@ impl<'a> Parser<'a> {
         Parser { ast: None }
     }
 
-    pub fn parse<'b>(&mut self, tok_iter: impl Iterator<Item = &'b Token<'b>>) -> Result<(), String> {
-        // let syntree = test_cmdline(token_list.as_slices().0);
-        // for i in token_list {
+    pub fn parse(&mut self, tok_iter: impl TokenIter<'a>) -> Result<(), String> {
+        let b = tok_iter.clone();
+        for tok in tok_iter {
+            println!("{:?}", tok);
+        }
+        // let syntree = test_cmdline(token_iter.as_slices().0);
+        // for i in token_iter {
         //     println!("{:?}", i);
         // }
         Ok(())
