@@ -28,6 +28,12 @@ pub enum Token<'a> {
     VarString(Cow<'a, str>), // string slice representing commands, parameters to commands, etc
 }
 
+impl<'a> Default for Token<'a> {
+    fn default() -> Token<'a> {
+        Token::WhiteSpace
+    }
+}
+
 pub struct LexicalAnalyzer<'a> {
     pub token_list: VecDeque<Token<'a>>, // TODO: turn into iter
 }
@@ -44,7 +50,7 @@ impl<'a> LexicalAnalyzer<'a> {
         // turn Token::QuotedString into Token::VarString
         for tok in self.token_list.iter_mut() {
             if let Token::QuotedString(_) = *tok {
-                let quoted_token = mem::replace(tok, Token::WhiteSpace);
+                let quoted_token = mem::replace(tok, Token::default());
                 if let Token::QuotedString(s) = quoted_token {
                     *tok = Token::VarString(s);
                 }
@@ -55,7 +61,7 @@ impl<'a> LexicalAnalyzer<'a> {
         let mut i = 0;
         while i != self.token_list.len() - 1 {
             match (&self.token_list[i], &self.token_list[i + 1]) {
-                (&Token::VarString(_), &Token::VarString(_)) => {
+                (Token::VarString(_), Token::VarString(_)) => {
                     let m = self.token_list.remove(i + 1).unwrap();
 
                     if let Token::VarString(m) = m {
@@ -159,7 +165,7 @@ fn test_analyzer() {
     lexer.tokenize(&string);
 
     let mut it = lexer.token_list.iter();
-    assert!(it.next() == Some(&Token::VarString("echo")));
+    assert!(it.next() == Some(&Token::VarString("echo".into())));
     assert!(it.next() == Some(&Token::WhiteSpace));
     assert!(it.next() == Some(&Token::VarString("void")));
     assert!(it.next() == Some(&Token::WhiteSpace));
