@@ -34,6 +34,16 @@ impl<'a> Default for Token<'a> {
     }
 }
 
+impl<'a> Token<'a> {
+    fn new_quotedstring<T: Into<Cow<'a, str>>>(x: T) -> Self {
+        Token::QuotedString(x.into())
+    }
+
+    fn new_varstring<T: Into<Cow<'a, str>>>(x: T) -> Self {
+        Token::VarString(x.into())
+    }
+}
+
 pub struct LexicalAnalyzer<'a> {
     pub token_list: VecDeque<Token<'a>>, // TODO: turn into iter
 }
@@ -93,7 +103,7 @@ impl<'a> LexicalAnalyzer<'a> {
                 match ch {
                     '\\' => {
                         if let Some((_, ch)) = it.next() {
-                            current_token = Some(Token::VarString(Cow::Owned(ch.to_string())));
+                            current_token = Some(Token::new_varstring(ch.to_string()));
                         }
                     }
                     '\t' | ' ' => {
@@ -103,8 +113,7 @@ impl<'a> LexicalAnalyzer<'a> {
                         // extract string literal in between quotes
                         let c = it.position(|(_, _ch)| _ch == ch).unwrap();
                         let (start, end) = (i + 1, i + c + 1);
-                        current_token =
-                            Some(Token::QuotedString(Cow::Borrowed(&string[start..end])));
+                        current_token = Some(Token::new_quotedstring(&string[start..end]));
                     }
                     _ => {
                         let remaining_str = &string[i..];
@@ -127,7 +136,7 @@ impl<'a> LexicalAnalyzer<'a> {
                     capturing = false;
                     let end = i;
                     self.token_list
-                        .push_back(Token::VarString(Cow::Borrowed(&string[start..end])));
+                        .push_back(Token::new_varstring(&string[start..end]));
                 }
 
                 match current_token {
@@ -147,7 +156,7 @@ impl<'a> LexicalAnalyzer<'a> {
             } else {
                 if capturing {
                     self.token_list
-                        .push_back(Token::VarString(Cow::Borrowed(&string[start..])));
+                        .push_back(Token::new_varstring(&string[start..]));
                 }
                 break;
             }
@@ -165,18 +174,13 @@ fn test_analyzer() {
     lexer.tokenize(&string);
 
     let mut it = lexer.token_list.iter();
-    assert!(it.next() == Some(&Token::VarString("echo".into())));
-    assert!(it.next() == Some(&Token::WhiteSpace));
-    assert!(it.next() == Some(&Token::VarString("void")));
-    assert!(it.next() == Some(&Token::WhiteSpace));
+    assert!(it.next() == Some(&Token::new_varstring("echo")));
+    assert!(it.next() == Some(&Token::new_varstring("void")));
     assert!(it.next() == Some(&Token::Symbol("&")));
-    assert!(it.next() == Some(&Token::WhiteSpace));
-    assert!(it.next() == Some(&Token::VarString("sleep")));
-    assert!(it.next() == Some(&Token::WhiteSpace));
-    assert!(it.next() == Some(&Token::VarString("1000h")));
+    assert!(it.next() == Some(&Token::new_varstring("sleep")));
+    assert!(it.next() == Some(&Token::new_varstring("1000h")));
     assert!(it.next() == Some(&Token::Symbol(";")));
-    assert!(it.next() == Some(&Token::WhiteSpace));
-    assert!(it.next() == Some(&Token::VarString("echo")));
+    assert!(it.next() == Some(&Token::new_varstring("echo")));
 }
 
 #[test]
