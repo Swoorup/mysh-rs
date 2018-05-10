@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use lexer::Token;
 
 #[derive(Debug)]
@@ -148,11 +146,11 @@ impl<'a> Parser<'a> {
         Parser { ast: None }
     }
 
-    pub fn parse(&mut self, token_list: VecDeque<Token>) -> Result<(), String> {
-        let syntree = test_cmdline(token_list.as_slices().0);
-        for i in token_list {
-            println!("{:?}", i);
-        }
+    pub fn parse<'b>(&mut self, tok_iter: impl Iterator<Item = &'b Token<'b>>) -> Result<(), String> {
+        // let syntree = test_cmdline(token_list.as_slices().0);
+        // for i in token_list {
+        //     println!("{:?}", i);
+        // }
         Ok(())
     }
 }

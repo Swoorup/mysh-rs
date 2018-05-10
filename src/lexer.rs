@@ -45,7 +45,7 @@ impl<'a> Token<'a> {
 }
 
 pub struct LexicalAnalyzer<'a> {
-    pub token_list: VecDeque<Token<'a>>, // TODO: turn into iter
+    token_list: VecDeque<Token<'a>>, 
 }
 
 impl<'a> LexicalAnalyzer<'a> {
@@ -67,7 +67,7 @@ impl<'a> LexicalAnalyzer<'a> {
             }
         }
 
-        // stitch adjacent VarStrings
+        // stitch adjacent VarStrings without seperation characters
         let mut i = 0;
         while i != self.token_list.len() - 1 {
             match (&self.token_list[i], &self.token_list[i + 1]) {
@@ -163,6 +163,10 @@ impl<'a> LexicalAnalyzer<'a> {
         }
 
         self.flatten();
+    }
+
+    pub fn token_iter(&self) -> impl Iterator<Item = &Token> { 
+        self.token_list.iter()
     }
 }
 

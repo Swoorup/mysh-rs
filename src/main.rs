@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(unused_variables)]
 #![feature(if_while_or_patterns)]
 use std::io;
 use std::io::Write;
@@ -30,7 +31,7 @@ fn main() {
 
         // use iter
         let mut parser = Parser::new();
-        match parser.parse(lexer.token_list) {
+        match parser.parse(lexer.token_iter()) {
             Ok(_) => (),
             Err(e) => println!("Error in parsing: {}", e),
         }
