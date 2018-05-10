@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-#![feature(if_while_or_patterns)]
+#![feature(nll)]
+
 use std::io;
 use std::io::Write;
 
