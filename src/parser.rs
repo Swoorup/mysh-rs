@@ -56,6 +56,29 @@ pub struct Parser<'a, T> {
     tok_iter: T,
 }
 
+impl<'a, T> Parser<'a, T>
+where
+    T: TokenIter<'a>,
+{
+    pub fn new(toker_iter: T) -> Parser<'a, T> {
+        Parser {
+            ast: None,
+            tok_iter: toker_iter,
+        }
+    }
+
+    pub fn parse(&mut self) -> Result<(), String> {
+        let syntree = self.test_cmdline();
+        if syntree.is_some() {
+            println!("{:#?}", syntree.unwrap());
+        }
+
+        if self.tok_iter.next().is_some() {
+            println!("Unexpected token");
+        }
+        Ok(())
+    }
+
 //	test all command line production orderwise
 fn test_cmdline<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
     return if let Some(st) = test_cmdline_1(token_iter.clone()) {
