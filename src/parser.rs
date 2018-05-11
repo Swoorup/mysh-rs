@@ -151,15 +151,14 @@ where
 
     // test all job production in order
     fn test_job(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let funcs = [Self::test_job_1, Self::test_job_2];
+
         let cloned_iter = self.tok_iter.clone(); // to reset if test fails
-
-        if let Some(st) = self.test_job_1() {
-            return Some(st);
-        }
-
-        self.tok_iter = cloned_iter.clone();
-        if let Some(st) = self.test_job_2() {
-            return Some(st);
+        for f in funcs.iter() {
+            self.tok_iter = cloned_iter.clone();
+            if let Some(st) = f(self) {
+                return Some(st);
+            }
         }
 
         self.tok_iter = cloned_iter;
@@ -185,20 +184,14 @@ where
 
     // test all command production orderwise
     fn test_cmd(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let funcs = [Self::test_cmd_1, Self::test_cmd_2, Self::test_cmd_3];
+
         let cloned_iter = self.tok_iter.clone(); // to reset if test fails
-
-        if let Some(st) = self.test_cmd_1() {
-            return Some(st);
-        }
-
-        self.tok_iter = cloned_iter.clone();
-        if let Some(st) = self.test_cmd_2() {
-            return Some(st);
-        }
-
-        self.tok_iter = cloned_iter.clone();
-        if let Some(st) = self.test_cmd_3() {
-            return Some(st);
+        for f in funcs.iter() {
+            self.tok_iter = cloned_iter.clone();
+            if let Some(st) = f(self) {
+                return Some(st);
+            }
         }
 
         self.tok_iter = cloned_iter;
@@ -233,15 +226,23 @@ where
         }
 
         let term_filename = self.tok_iter.next()?;
-        if let Token::VarString(_) = term_filename {
-            Some(SyntaxTree::new(
+        match term_filename {
+            Token::VarString(_) => Some(SyntaxTree::new(
                 term,
                 simplecmd_node,
                 Some(SyntaxTree::new(term_filename, None, None)),
-            ))
-        } else {
-            None
+            )),
+            _ => None,
         }
+        // if let Token::VarString(_) = term_filename {
+        //     Some(SyntaxTree::new(
+        //         term,
+        //         simplecmd_node,
+        //         Some(SyntaxTree::new(term_filename, None, None)),
+        //     ))
+        // } else {
+        //     None
+        // }
     }
 
     //	<simple command>
