@@ -31,8 +31,8 @@ fn main() {
         lexer.tokenize(&input);
 
         // use iter
-        let mut parser = Parser::new();
-        match parser.parse(lexer.token_iter()) {
+        let mut parser = Parser::new(lexer.token_iter());
+        match parser.parse(){
             Ok(_) => (),
             Err(e) => println!("Error in parsing: {}", e),
         }

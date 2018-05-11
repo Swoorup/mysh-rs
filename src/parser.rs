@@ -19,7 +19,7 @@ impl<'a> SyntaxTree<'a> {
             right: right_node,
             token: token,
         })
-        }
+    }
 
     fn insert_left(&mut self, token: &'a Token) {
         self.left = Some(Box::new(SyntaxTree {
@@ -79,111 +79,210 @@ where
         Ok(())
     }
 
-//	test all command line production orderwise
-fn test_cmdline<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    return if let Some(st) = test_cmdline_1(token_iter.clone()) {
-        Some(st)
-    } else if let Some(st) = test_cmdline_2(token_iter.clone()) {
-        Some(st)
-    } else if let Some(st) = test_cmdline_3(token_iter.clone()) {
-        Some(st)
-    } else if let Some(st) = test_cmdline_4(token_iter.clone()) {
-        Some(st)
-    } else if let Some(st) = test_cmdline_5(token_iter.clone()) {
-        Some(st)
-    } else {
+    //	test all command line production orderwise
+    fn test_cmdline(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let funcs = [
+            Self::test_cmdline_1,
+            Self::test_cmdline_2,
+            Self::test_cmdline_3,
+            Self::test_cmdline_4,
+            Self::test_cmdline_5,
+        ];
+
+        let cloned_iter = self.tok_iter.clone(); // to reset if test fails
+        for f in funcs.iter() {
+            self.tok_iter = cloned_iter.clone();
+            if let Some(st) = f(self) {
+                return Some(st);
+            }
+        }
+
+        self.tok_iter = cloned_iter;
         None
-    };
-}
-//	<job> ';' <command line>
-fn test_cmdline_1<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-//	<job> ';'
-fn test_cmdline_2<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-//	<job> '&' <command line>
-fn test_cmdline_3<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-//	<job> '&'
-fn test_cmdline_4<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-//	<job>
-fn test_cmdline_5<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-
-// test all job production in order
-fn test_job<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    return if let Some(st) = test_job_1(token_iter.clone()) {
-        Some(st)
-    } else if let Some(st) = test_job_2(token_iter.clone()) {
-        Some(st)
-    } else {
-        None
-    };
-}
-// <command> '|' <job>
-fn test_job_1<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-// <command>
-fn test_job_2<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-
-// test all command production orderwise
-fn test_cmd<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    return if let Some(st) = test_cmd_1(token_iter.clone()) {
-        Some(st)
-    } else if let Some(st) = test_cmd_2(token_iter.clone()) {
-        Some(st)
-    } else if let Some(st) = test_cmd_3(token_iter.clone()) {
-        Some(st)
-    } else {
-        None
-    };
-}
-//	<simple command> '<' <filename>
-fn test_cmd_1<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-//	<simple command> '>' <filename>
-fn test_cmd_2<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-//	<simple command>
-fn test_cmd_3<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-
-// test simple cmd production
-fn test_simplecmd<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-
-// test tokenlist production
-fn test_tokenlist<'a>(token_iter: impl TokenIter<'a>) -> Option<SyntaxTree<'a>> {
-    None
-}
-
-impl<'a> Parser<'a> {
-    pub fn new() -> Parser<'a> {
-        Parser { ast: None }
     }
 
-    pub fn parse(&mut self, tok_iter: impl TokenIter<'a>) -> Result<(), String> {
-        let b = tok_iter.clone();
-        for tok in tok_iter {
-            println!("{:?}", tok);
+    //	<job> ';' <command line>
+    fn test_cmdline_1(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let job_node = Some(self.test_job()?);
+
+        let term = self.tok_iter.next()?;
+        if term != &Token::Symbol(";") {
+            return None;
         }
-        // let syntree = test_cmdline(token_iter.as_slices().0);
-        // for i in token_iter {
-        //     println!("{:?}", i);
-        // }
-        Ok(())
+
+        let cmd_line_node = Some(self.test_cmdline()?);
+
+        Some(SyntaxTree::new(term, job_node, cmd_line_node))
+    }
+    //	<job> ';'
+    fn test_cmdline_2(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let job_node = Some(self.test_job()?);
+
+        let term = self.tok_iter.next()?;
+        if term != &Token::Symbol(";") {
+            return None;
+        }
+
+        Some(SyntaxTree::new(term, job_node, None))
+    }
+    //	<job> '&' <command line>
+    fn test_cmdline_3(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let job_node = Some(self.test_job()?);
+        let term = self.tok_iter.next()?;
+        if term != &Token::Symbol("&") {
+            return None;
+        }
+
+        let cmd_line_node = Some(self.test_cmdline()?);
+
+        Some(SyntaxTree::new(term, job_node, cmd_line_node))
+    }
+    //	<job> '&'
+    fn test_cmdline_4(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let job_node = Some(self.test_job()?);
+        let term = self.tok_iter.next()?;
+        if term != &Token::Symbol("&") {
+            return None;
+        }
+
+        Some(SyntaxTree::new(term, job_node, None))
+    }
+    //	<job>
+    fn test_cmdline_5(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        self.test_job()
+    }
+
+    // test all job production in order
+    fn test_job(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let cloned_iter = self.tok_iter.clone(); // to reset if test fails
+
+        if let Some(st) = self.test_job_1() {
+            return Some(st);
+        }
+
+        self.tok_iter = cloned_iter.clone();
+        if let Some(st) = self.test_job_2() {
+            return Some(st);
+        }
+
+        self.tok_iter = cloned_iter;
+        None
+    }
+    // <command> '|' <job>
+    fn test_job_1(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let cmd_node = Some(self.test_cmd()?);
+        let term = self.tok_iter.next()?;
+        if term != &Token::Symbol("|") {
+            return None;
+        }
+
+        let job_node = Some(self.test_job()?);
+
+        Some(SyntaxTree::new(term, cmd_node, job_node))
+    }
+
+    // <command>
+    fn test_job_2(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        self.test_cmd()
+    }
+
+    // test all command production orderwise
+    fn test_cmd(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let cloned_iter = self.tok_iter.clone(); // to reset if test fails
+
+        if let Some(st) = self.test_cmd_1() {
+            return Some(st);
+        }
+
+        self.tok_iter = cloned_iter.clone();
+        if let Some(st) = self.test_cmd_2() {
+            return Some(st);
+        }
+
+        self.tok_iter = cloned_iter.clone();
+        if let Some(st) = self.test_cmd_3() {
+            return Some(st);
+        }
+
+        self.tok_iter = cloned_iter;
+        None
+    }
+
+    //	<simple command> '<' <filename>
+    fn test_cmd_1(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let simplecmd_node = Some(self.test_simplecmd()?);
+        let term = self.tok_iter.next()?;
+        if term != &Token::Symbol("<") {
+            return None;
+        }
+
+        let term_filename = self.tok_iter.next()?;
+        if let Token::VarString(_) = term_filename {
+            Some(SyntaxTree::new(
+                term,
+                simplecmd_node,
+                Some(SyntaxTree::new(term_filename, None, None)),
+            ))
+        } else {
+            None
+        }
+    }
+    //	<simple command> '>' <filename>
+    fn test_cmd_2(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let simplecmd_node = Some(self.test_simplecmd()?);
+        let term = self.tok_iter.next()?;
+        if term != &Token::Symbol(">") {
+            return None;
+        }
+
+        let term_filename = self.tok_iter.next()?;
+        if let Token::VarString(_) = term_filename {
+            Some(SyntaxTree::new(
+                term,
+                simplecmd_node,
+                Some(SyntaxTree::new(term_filename, None, None)),
+            ))
+        } else {
+            None
+        }
+    }
+
+    //	<simple command>
+    fn test_cmd_3(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        self.test_simplecmd()
+    }
+
+    // test simple cmd production
+    // <pathname> <token list>
+    fn test_simplecmd(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let cloned_iter = self.tok_iter.clone();
+
+        let term_pathname = self.tok_iter.next()?;
+        if let Token::VarString(_) = term_pathname {
+            let tokenlist_node = self.test_tokenlist();
+            // don't check since its a valid grammer
+
+            Some(SyntaxTree::new(term_pathname, None, tokenlist_node))
+        } else {
+            self.tok_iter = cloned_iter;
+            None
+        }
+    }
+
+    // test tokenlist production
+    // <token> <token list>
+    fn test_tokenlist(&mut self) -> Option<Box<SyntaxTree<'a>>> {
+        let cloned_iter = self.tok_iter.clone();
+
+        let token = self.tok_iter.next()?;
+        if let Token::VarString(_) = token {
+            let tokenlist_node = self.test_tokenlist();
+            // don't check since its a valid grammer
+
+            Some(SyntaxTree::new(token, None, tokenlist_node))
+        } else {
+            self.tok_iter = cloned_iter;
+            None
+        }
     }
 }
