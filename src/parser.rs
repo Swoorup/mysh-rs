@@ -51,8 +51,9 @@ fn test_syntax_tree() {
     println!("{:?}", syntaxtree);
 }
 
-pub struct Parser<'a> {
-    ast: Option<SyntaxTree<'a>>,
+pub struct Parser<'a, T> {
+    ast: Option<Box<SyntaxTree<'a>>>,
+    tok_iter: T,
 }
 
 //	test all command line production orderwise
