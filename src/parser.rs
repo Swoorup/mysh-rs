@@ -3,19 +3,23 @@ use lexer::TokenIter;
 
 #[derive(Debug)]
 struct SyntaxTree<'a> {
+    token: &'a Token<'a>,
     left: Option<Box<SyntaxTree<'a>>>,
     right: Option<Box<SyntaxTree<'a>>>,
-    token: &'a Token<'a>,
 }
 
 impl<'a> SyntaxTree<'a> {
-    fn new(token: &'a Token) -> SyntaxTree<'a> {
-        SyntaxTree {
-            left: None,
-            right: None,
+    fn new(
+        token: &'a Token,
+        left_node: Option<Box<SyntaxTree<'a>>>,
+        right_node: Option<Box<SyntaxTree<'a>>>,
+    ) -> Box<SyntaxTree<'a>> {
+        Box::new(SyntaxTree {
+            left: left_node,
+            right: right_node,
             token: token,
+        })
         }
-    }
 
     fn insert_left(&mut self, token: &'a Token) {
         self.left = Some(Box::new(SyntaxTree {
