@@ -21,34 +21,31 @@ impl<'a> SyntaxTree<'a> {
         })
     }
 
-    fn insert_left(&mut self, token: &'a Token) {
+    fn set_left(mut self, token: &'a Token) -> SyntaxTree<'a> {
         self.left = Some(Box::new(SyntaxTree {
             left: None,
             right: None,
             token: token,
         }));
+        self
     }
 
-    fn insert_right(&mut self, token: &'a Token) {
+    fn set_right(mut self, token: &'a Token) -> SyntaxTree<'a> {
         self.right = Some(Box::new(SyntaxTree {
             left: None,
             right: None,
             token: token,
         }));
+        self
     }
 }
 
 #[test]
 fn test_syntax_tree() {
-    let mut syntaxtree = SyntaxTree::new(&Token::WhiteSpace);
-    syntaxtree.insert_left(&Token::WhiteSpace);
-    syntaxtree.insert_right(&Token::WhiteSpace);
-    syntaxtree
-        .right
-        .as_mut()
-        .unwrap()
-        .insert_left(&Token::WhiteSpace);
-    println!("{:?}", syntaxtree);
+    let mut syntaxtree = SyntaxTree::new(&Token::WhiteSpace, None, None)
+        .set_left(&Token::WhiteSpace)
+        .set_right(&Token::WhiteSpace);
+    println!("{:#?}", syntaxtree);
 }
 
 pub struct Parser<'a, T> {
