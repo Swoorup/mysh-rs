@@ -19,7 +19,7 @@ use parser::Parser;
 use interpreter::interpret;
 
 fn main() {
-    let prompt = Prompt::new(String::from("swoorup % "));
+    let prompt = Prompt::new(String::from("λ "));
 
     loop {
         print!("{}", prompt.get_prompt());
