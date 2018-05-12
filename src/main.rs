@@ -6,6 +6,7 @@ use std::io;
 use std::io::Write;
 
 #[macro_use] extern crate lazy_static;
+extern crate nix;
 
 mod prompt;
 mod lexer;
