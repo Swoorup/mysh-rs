@@ -1,7 +1,7 @@
-use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::mem;
 use std::vec;
+use parser::*;
 
 lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
@@ -18,33 +18,6 @@ fn starts_with_symbol(line: &str) -> Option<&'static str> {
         .iter()
         .find(|&&sym| line.starts_with(sym))
         .map(|sym| *sym)
-}
-
-#[derive(PartialEq, Debug)]
-pub enum Token<'a> {
-    WhiteSpace,
-    Symbol(&'static str), // i.e ';', '&', etc
-    QuotedString(Cow<'a, str>),
-    VarString(Cow<'a, str>), // string slice representing commands, parameters to commands, etc
-}
-
-pub trait TokenIter<'a>: Iterator<Item = &'a Token<'a>> + Clone {}
-impl<'a, T: Iterator<Item = &'a Token<'a>> + Clone> TokenIter<'a> for T {}
-
-impl<'a> Default for Token<'a> {
-    fn default() -> Token<'a> {
-        Token::WhiteSpace
-    }
-}
-
-impl<'a> Token<'a> {
-    fn new_quotedstring<T: Into<Cow<'a, str>>>(x: T) -> Self {
-        Token::QuotedString(x.into())
-    }
-
-    fn new_varstring<T: Into<Cow<'a, str>>>(x: T) -> Self {
-        Token::VarString(x.into())
-    }
 }
 
 pub struct LexicalAnalyzer<'a> {

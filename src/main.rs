@@ -10,10 +10,12 @@ use std::io::Write;
 mod prompt;
 mod lexer;
 mod parser;
+mod interpreter;
 
 use prompt::Prompt;
 use lexer::LexicalAnalyzer;
 use parser::Parser;
+use interpreter::interpret;
 
 fn main() {
     let prompt = Prompt::new(String::from("swoorup % "));
@@ -33,7 +35,8 @@ fn main() {
         // use iter
         let mut parser = Parser::new(lexer.token_iter());
         match parser.parse(){
-            Ok(_) => (),
+            Ok(Some(expr)) => interpret(*expr),
+            Ok(None) => (),
             Err(e) => println!("Error in parsing: {}", e),
         }
     }
