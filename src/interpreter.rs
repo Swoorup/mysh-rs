@@ -15,10 +15,10 @@ pub fn interpret_simplecmd_expr(expr: SimpleCmdExpr) -> Command {
 pub fn interpret_cmd_expr(expr: CommandExpr) {
     match expr {
         CommandExpr::Type1(simplecmd_expr) => {
-            let output = interpret_simplecmd_expr(*simplecmd_expr).output();
-            if output.is_ok() {
-                println!("stdout: {}", String::from_utf8_lossy(&output.unwrap().stdout))
-            }
+            let cmd = interpret_simplecmd_expr(*simplecmd_expr);
+            // if output.is_ok() {
+            //     println!("stdout: {}", String::from_utf8_lossy(&output.unwrap().stdout))
+            // }
         }
         CommandExpr::Type2(simplecmd_expr, op, filename) => {}
     }
