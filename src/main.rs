@@ -8,21 +8,19 @@ use std::io::Write;
 #[macro_use] extern crate lazy_static;
 extern crate nix;
 
-mod prompt;
+mod builtin;
 mod lexer;
 mod parser;
 mod interpreter;
 
-use prompt::Prompt;
+use builtin::*;
 use lexer::LexicalAnalyzer;
 use parser::Parser;
 use interpreter::interpret;
 
 fn main() {
-    let prompt = Prompt::new(String::from("λ "));
-
     loop {
-        print!("{}", prompt.get_prompt());
+        print!("{}", get_prompt());
         io::stdout().flush().expect("Failed to flush");
 
         // read input
