@@ -54,13 +54,13 @@ pub fn interpret_job_expr(expr: &JobExpr) -> Command {
                         let mut cmd = interpret_cmd_expr(lhs_cmd_expr);
                         cmd.stdin(output);
                         return cmd;
-                    },
+                    }
                     JobExpr::Type2(box lhs_cmd_expr, JobOp::Pipe, box rhs_job_expr) => {
                         let mut cmd = interpret_cmd_expr(lhs_cmd_expr);
                         cmd.stdin(output).stdout(Stdio::piped());
                         inner_job_expr = rhs_job_expr;
                         output = cmd.spawn().unwrap().stdout.unwrap();
-                    },
+                    }
                 };
             }
         }
@@ -70,10 +70,28 @@ pub fn interpret_job_expr(expr: &JobExpr) -> Command {
 pub fn interpret_cmdline_expr(expr: &CommandLineExpr) {
     match expr {
         CommandLineExpr::Type1(box job_expr) => {
-            let output = interpret_job_expr(job_expr).spawn().unwrap().wait();
+            interpret_job_expr(job_expr).spawn().unwrap().wait();
         }
-        CommandLineExpr::Type2(box job_expr, op) => {}
-        CommandLineExpr::Type3(box job_expr, op, box cmdline_expr) => {}
+        CommandLineExpr::Type2(box job_expr, op) => match op {
+            CommandLineOp::Background => {
+                interpret_job_expr(job_expr).spawn();
+            }
+            CommandLineOp::Sequence => {
+                interpret_job_expr(job_expr).spawn().unwrap().wait();
+            }
+        },
+        CommandLineExpr::Type3(box job_expr, op, box cmdline_expr) => {
+            match op {
+                CommandLineOp::Background => {
+                    interpret_job_expr(job_expr).spawn();
+                }
+                CommandLineOp::Sequence => {
+                    interpret_job_expr(job_expr).spawn().unwrap().wait();
+                }
+            }
+
+            interpret_cmdline_expr(cmdline_expr);
+        }
     }
 }
 
