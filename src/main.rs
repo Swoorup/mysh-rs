@@ -1,22 +1,24 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![feature(nll)]
+#![feature(box_syntax, box_patterns)]
 
 use std::io;
 use std::io::Write;
 
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 extern crate nix;
 
 mod builtin;
+mod interpreter;
 mod lexer;
 mod parser;
-mod interpreter;
 
 use builtin::*;
+use interpreter::interpret;
 use lexer::LexicalAnalyzer;
 use parser::Parser;
-use interpreter::interpret;
 
 fn main() {
     loop {
@@ -33,7 +35,7 @@ fn main() {
 
         // use iter
         let mut parser = Parser::new(lexer.token_iter());
-        match parser.parse(){
+        match parser.parse() {
             Ok(Some(expr)) => interpret(*expr),
             Ok(None) => (),
             Err(e) => println!("Error in parsing: {}", e),
