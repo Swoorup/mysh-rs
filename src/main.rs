@@ -17,7 +17,7 @@ mod parser;
 
 use builtin::*;
 use interpreter::interpret;
-use lexer::LexicalAnalyzer;
+use lexer::Tokenizer;
 use parser::Parser;
 
 fn main() {
@@ -30,11 +30,10 @@ fn main() {
         io::stdin().read_line(&mut input).unwrap();
 
         // put it to lexer
-        let mut lexer = LexicalAnalyzer::new();
-        lexer.tokenize(&input);
+        let tokens = Tokenizer::new(&input);
 
         // use iter
-        let mut parser = Parser::new(lexer.token_iter());
+        let mut parser = Parser::new(tokens.iter());
         match parser.parse() {
             Ok(Some(expr)) => interpret(*expr),
             Ok(None) => (),

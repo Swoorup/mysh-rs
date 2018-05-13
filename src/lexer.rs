@@ -1,7 +1,7 @@
+use parser::*;
 use std::collections::VecDeque;
 use std::mem;
 use std::vec;
-use parser::*;
 
 lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
@@ -20,52 +20,20 @@ fn starts_with_symbol(line: &str) -> Option<&'static str> {
         .map(|sym| *sym)
 }
 
-pub struct LexicalAnalyzer<'a> {
+pub struct Tokenizer<'a> {
     token_list: VecDeque<Token<'a>>,
 }
 
-impl<'a> LexicalAnalyzer<'a> {
-    pub fn new() -> LexicalAnalyzer<'a> {
-        LexicalAnalyzer {
+impl<'a> Tokenizer<'a> {
+    pub fn new(string: &'a str) -> Tokenizer<'a> {
+        let mut tokenizer = Tokenizer {
             token_list: VecDeque::new(),
-        }
+        };
+        tokenizer.tokenize(string);
+        tokenizer
     }
 
-    // join literals, flatten glob characters
-    fn flatten(&mut self) {
-        // turn Token::QuotedString into Token::VarString
-        for tok in self.token_list.iter_mut() {
-            if let Token::QuotedString(_) = *tok {
-                let quoted_token = mem::replace(tok, Token::default());
-                if let Token::QuotedString(s) = quoted_token {
-                    *tok = Token::VarString(s);
-                }
-            }
-        }
-
-        // stitch adjacent VarStrings without seperation characters
-        let mut i = 0;
-        while i != self.token_list.len() - 1 {
-            match (&self.token_list[i], &self.token_list[i + 1]) {
-                (Token::VarString(_), Token::VarString(_)) => {
-                    let m = self.token_list.remove(i + 1).unwrap();
-
-                    if let Token::VarString(m) = m {
-                        if let Token::VarString(ref mut s) = self.token_list[i] {
-                            s.to_mut().push_str(&m);
-                        }
-                    }
-                }
-                _ => i += 1,
-            }
-        }
-
-        // remove newline and whitespace
-        self.token_list
-            .retain(|tok| *tok != Token::WhiteSpace && *tok != Token::Symbol("\n"));
-    }
-
-    pub fn tokenize(&mut self, string: &'a str) {
+    fn tokenize(&mut self, string: &'a str) {
         let mut it = string.chars().enumerate().peekable();
 
         let mut start = 0;
@@ -141,19 +109,51 @@ impl<'a> LexicalAnalyzer<'a> {
         self.flatten();
     }
 
-    pub fn token_iter(&self) -> impl TokenIter {
-        self.token_list.iter().clone()
+    // join literals, flatten glob characters
+    // glob flatten -> NOT IMPLEMENTED
+    fn flatten(&mut self) {
+        // turn Token::QuotedString into Token::VarString
+        for tok in self.token_list.iter_mut() {
+            if let Token::QuotedString(_) = *tok {
+                let quoted_token = mem::replace(tok, Token::default());
+                if let Token::QuotedString(s) = quoted_token {
+                    *tok = Token::VarString(s);
+                }
+            }
+        }
+
+        // stitch adjacent VarStrings without seperation characters
+        let mut i = 0;
+        while i != self.token_list.len() - 1 {
+            match (&self.token_list[i], &self.token_list[i + 1]) {
+                (Token::VarString(_), Token::VarString(_)) => {
+                    let m = self.token_list.remove(i + 1).unwrap();
+
+                    if let Token::VarString(m) = m {
+                        if let Token::VarString(ref mut s) = self.token_list[i] {
+                            s.to_mut().push_str(&m);
+                        }
+                    }
+                }
+                _ => i += 1,
+            }
+        }
+
+        // remove newline and whitespace
+        self.token_list
+            .retain(|tok| *tok != Token::WhiteSpace && *tok != Token::Symbol("\n"));
+    }
+
+    pub fn iter(&self) -> impl TokenIter {
+        self.token_list.iter()
     }
 }
 
 #[test]
 fn test_analyzer() {
-    let string = "  echo void & sleep 1000h; echo '%^;'";
-    println!("String: {}", string);
-    let mut lexer = LexicalAnalyzer::new();
-    lexer.tokenize(&string);
+    let lexer = Tokenizer::new(" echo void & sleep 1000h; echo '%^;'");
 
-    let mut it = lexer.token_list.iter();
+    let mut it = lexer.iter();
     assert!(it.next() == Some(&Token::new_varstring("echo")));
     assert!(it.next() == Some(&Token::new_varstring("void")));
     assert!(it.next() == Some(&Token::Symbol("&")));
