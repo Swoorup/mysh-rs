@@ -1,6 +1,7 @@
 use parser::*;
 use std::fs::File;
-use std::process::{Command, Stdio};
+use std::io::Result;
+use std::process::{Child, Command, Stdio};
 
 pub fn interpret_simplecmd_expr(expr: &SimpleCmdExpr) -> Command {
     match expr {
@@ -33,33 +34,32 @@ pub fn interpret_cmd_expr(expr: &CommandExpr) -> Command {
     }
 }
 
-pub fn interpret_job_expr(expr: &JobExpr) -> Command {
+pub fn interpret_job_expr(expr: &JobExpr) -> Result<Vec<Child>> {
+    let stdio = Stdio::inherit();
     match expr {
-        JobExpr::Type1(box cmd_expr) => interpret_cmd_expr(cmd_expr),
+        JobExpr::Type1(box cmd_expr) => {
+            let mut cmd = interpret_cmd_expr(cmd_expr);
+            Ok(vec![cmd.spawn()?])
+        }
         JobExpr::Type2(box cmd_expr, JobOp::Pipe, box job_expr) => {
-            let mut first_cmd = interpret_cmd_expr(cmd_expr);
-            first_cmd.stdout(Stdio::piped());
-            let first_output = first_cmd.spawn().unwrap().stdout.unwrap();
-
-            // if let Err(e) = &child {
-            //     println!("error: {}", e);
-            //     return;
-            // }
+            let mut cmd = interpret_cmd_expr(cmd_expr);
+            cmd.stdout(Stdio::piped());
+            let child = cmd.spawn()?;
+            let mut output = child.stdout.unwrap();
 
             let mut inner_job_expr = job_expr;
-            let mut output = first_output;
             loop {
                 match inner_job_expr {
                     JobExpr::Type1(box lhs_cmd_expr) => {
                         let mut cmd = interpret_cmd_expr(lhs_cmd_expr);
                         cmd.stdin(output);
-                        return cmd;
+                        return Ok(vec![cmd.spawn()?]);
                     }
                     JobExpr::Type2(box lhs_cmd_expr, JobOp::Pipe, box rhs_job_expr) => {
                         let mut cmd = interpret_cmd_expr(lhs_cmd_expr);
                         cmd.stdin(output).stdout(Stdio::piped());
                         inner_job_expr = rhs_job_expr;
-                        output = cmd.spawn().unwrap().stdout.unwrap();
+                        output = cmd.spawn()?.stdout.unwrap();
                     }
                 };
             }
@@ -70,23 +70,23 @@ pub fn interpret_job_expr(expr: &JobExpr) -> Command {
 pub fn interpret_cmdline_expr(expr: &CommandLineExpr) {
     match expr {
         CommandLineExpr::Type1(box job_expr) => {
-            interpret_job_expr(job_expr).spawn().unwrap().wait();
+            interpret_job_expr(job_expr);
         }
         CommandLineExpr::Type2(box job_expr, op) => match op {
             CommandLineOp::Background => {
-                interpret_job_expr(job_expr).spawn();
+                interpret_job_expr(job_expr);
             }
             CommandLineOp::Sequence => {
-                interpret_job_expr(job_expr).spawn().unwrap().wait();
+                interpret_job_expr(job_expr);
             }
         },
         CommandLineExpr::Type3(box job_expr, op, box cmdline_expr) => {
             match op {
                 CommandLineOp::Background => {
-                    interpret_job_expr(job_expr).spawn();
+                    interpret_job_expr(job_expr);
                 }
                 CommandLineOp::Sequence => {
-                    interpret_job_expr(job_expr).spawn().unwrap().wait();
+                    interpret_job_expr(job_expr);
                 }
             }
 
