@@ -1,7 +1,10 @@
+use nix;
+use nix::unistd::Pid;
 use parser::*;
 use std::fs::File;
 use std::io::Result;
-use std::process::{Child, Command, Stdio};
+use std::io::{Error, ErrorKind};
+use std::process::{Command, Stdio};
 
 pub fn interpret_simplecmd_expr(expr: &SimpleCmdExpr) -> Command {
     match expr {
@@ -34,67 +37,71 @@ pub fn interpret_cmd_expr(expr: &CommandExpr) -> Command {
     }
 }
 
-pub fn interpret_job_expr(expr: &JobExpr) -> Result<Vec<Child>> {
-    let stdio = Stdio::inherit();
-    match expr {
-        JobExpr::Type1(box cmd_expr) => {
-            let mut cmd = interpret_cmd_expr(cmd_expr);
-            Ok(vec![cmd.spawn()?])
-        }
-        JobExpr::Type2(box cmd_expr, JobOp::Pipe, box job_expr) => {
-            let mut cmd = interpret_cmd_expr(cmd_expr);
-            cmd.stdout(Stdio::piped());
-            let child = cmd.spawn()?;
-            let mut output = child.stdout.unwrap();
+pub fn interpret_job_expr(expr: &JobExpr) -> Result<Vec<u32>> {
+    let mut stdio = Stdio::inherit();
+    let mut vec: Vec<u32> = Vec::new();
 
-            let mut inner_job_expr = job_expr;
-            loop {
-                match inner_job_expr {
-                    JobExpr::Type1(box lhs_cmd_expr) => {
-                        let mut cmd = interpret_cmd_expr(lhs_cmd_expr);
-                        cmd.stdin(output);
-                        return Ok(vec![cmd.spawn()?]);
-                    }
-                    JobExpr::Type2(box lhs_cmd_expr, JobOp::Pipe, box rhs_job_expr) => {
-                        let mut cmd = interpret_cmd_expr(lhs_cmd_expr);
-                        cmd.stdin(output).stdout(Stdio::piped());
-                        inner_job_expr = rhs_job_expr;
-                        output = cmd.spawn()?.stdout.unwrap();
-                    }
-                };
+    let mut inner_job_expr = expr;
+    loop {
+        match inner_job_expr {
+            JobExpr::Type1(box lhs_cmd_expr) => {
+                let child = interpret_cmd_expr(lhs_cmd_expr).stdin(stdio).spawn()?;
+                vec.push(child.id());
+                return Ok(vec);
             }
-        }
+            JobExpr::Type2(box lhs_cmd_expr, JobOp::Pipe, box rhs_job_expr) => {
+                let child = interpret_cmd_expr(lhs_cmd_expr)
+                    .stdin(stdio)
+                    .stdout(Stdio::piped())
+                    .spawn()?;
+                vec.push(child.id());
+                stdio = Stdio::from(child.stdout.unwrap());
+
+                inner_job_expr = rhs_job_expr;
+            }
+        };
     }
 }
 
-pub fn interpret_cmdline_expr(expr: &CommandLineExpr) {
+pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
+    let wait_job = |job: Vec<u32>| -> Result<()> {
+        let mut result: Result<()> = Ok(());
+        job.iter().for_each(|id| {
+            let pid = Pid::from_raw(*id as i32);
+            if let Err(e) = nix::sys::wait::waitpid(pid, None) {
+                result = Err(Error::from(ErrorKind::Other));
+            }
+        });
+        result
+    };
+
     match expr {
-        CommandLineExpr::Type1(box job_expr) => {
-            interpret_job_expr(job_expr);
+        CommandLineExpr::Type1(box job_expr)
+        | CommandLineExpr::Type2(box job_expr, CommandLineOp::Sequence) => {
+            interpret_job_expr(job_expr).and_then(|v| wait_job(v))
         }
-        CommandLineExpr::Type2(box job_expr, op) => match op {
-            CommandLineOp::Background => {
-                interpret_job_expr(job_expr);
-            }
-            CommandLineOp::Sequence => {
-                interpret_job_expr(job_expr);
-            }
-        },
+        CommandLineExpr::Type2(box job_expr, CommandLineOp::Background) => {
+            interpret_job_expr(job_expr).map(|_| ())
+        }
         CommandLineExpr::Type3(box job_expr, op, box cmdline_expr) => {
             match op {
                 CommandLineOp::Background => {
-                    interpret_job_expr(job_expr);
+                    if let Err(e) = interpret_job_expr(job_expr) {
+                        return Err(e);
+                    }
                 }
                 CommandLineOp::Sequence => {
-                    interpret_job_expr(job_expr);
+                    if let Err(e) = interpret_job_expr(job_expr).and_then(|v| wait_job(v)) {
+                        return Err(e);
+                    }
                 }
             }
 
-            interpret_cmdline_expr(cmdline_expr);
+            interpret_cmdline_expr(cmdline_expr)
         }
     }
 }
 
-pub fn interpret(expr: CommandLineExpr) {
-    interpret_cmdline_expr(&expr);
+pub fn interpret(expr: CommandLineExpr) -> Result<()> {
+    interpret_cmdline_expr(&expr)
 }
