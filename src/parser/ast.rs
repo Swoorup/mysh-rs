@@ -20,43 +20,43 @@
  *
 **/
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum CommandLineOp {
     Background,
     Sequence,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum JobOp {
     Pipe,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum CommandOp {
     RedirectIn,
     RedirectOut,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum CommandLineExpr {
     Type1(Box<JobExpr>),
     Type2(Box<JobExpr>, CommandLineOp),
     Type3(Box<JobExpr>, CommandLineOp, Box<CommandLineExpr>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum JobExpr {
     Type1(Box<CommandExpr>),
     Type2(Box<CommandExpr>, JobOp, Box<JobExpr>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum CommandExpr {
     Type1(Box<SimpleCmdExpr>),
     Type2(Box<SimpleCmdExpr>, CommandOp, String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum SimpleCmdExpr {
     Exe(String),
     ExeWithArg(String, Vec<String>),
