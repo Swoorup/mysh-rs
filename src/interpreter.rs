@@ -68,7 +68,7 @@ pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
         let mut result: Result<()> = Ok(());
         job.iter().for_each(|id| {
             let pid = Pid::from_raw(*id as i32);
-            if let Err(e) = nix::sys::wait::waitpid(pid, None) {
+            if let Err(_) = nix::sys::wait::waitpid(pid, None) {
                 result = Err(Error::from(ErrorKind::Other));
             }
         });

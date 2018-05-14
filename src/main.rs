@@ -1,4 +1,3 @@
-#![allow(unused_variables)]
 #![feature(nll)]
 #![feature(box_syntax, box_patterns)]
 
