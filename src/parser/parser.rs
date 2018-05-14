@@ -131,10 +131,6 @@ where
         }
     }
 
-    pub fn debug_print_next_token(&mut self) {
-        println!("Next remaining: {:?}", self.tok_iter.next());
-    }
-
     pub fn parse(&mut self) -> Result<Option<Box<CommandLineExpr>>, String> {
         let syntree = self.create_commandline_expr();
         let remaining_tok = self.tok_iter.next();
