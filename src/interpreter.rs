@@ -17,22 +17,22 @@ pub fn interpret_simplecmd_expr(expr: &SimpleCmdExpr) -> Command {
     }
 }
 
-pub fn interpret_cmd_expr(expr: &CommandExpr) -> Command {
+pub fn interpret_cmd_expr(expr: &CommandExpr) -> Result<Command> {
     match expr {
-        CommandExpr::Type1(box simplecmd_expr) => interpret_simplecmd_expr(simplecmd_expr),
+        CommandExpr::Type1(box simplecmd_expr) => Ok(interpret_simplecmd_expr(simplecmd_expr)),
         CommandExpr::Type2(box simplecmd_expr, op, filename) => {
             let mut cmd = interpret_simplecmd_expr(simplecmd_expr);
             match op {
                 CommandOp::RedirectIn => {
-                    let f = File::open(filename).unwrap();
+                    let f = File::open(filename)?;
                     cmd.stdin(Stdio::from(f));
                 }
                 CommandOp::RedirectOut => {
-                    let f = File::create(filename).unwrap();
+                    let f = File::create(filename)?;
                     cmd.stdout(Stdio::from(f));
                 }
             }
-            cmd
+            Ok(cmd)
         }
     }
 }
@@ -45,12 +45,12 @@ pub fn interpret_job_expr(expr: &JobExpr) -> Result<Vec<u32>> {
     loop {
         match inner_job_expr {
             JobExpr::Type1(box lhs_cmd_expr) => {
-                let child = interpret_cmd_expr(lhs_cmd_expr).stdin(stdio).spawn()?;
+                let child = interpret_cmd_expr(lhs_cmd_expr)?.stdin(stdio).spawn()?;
                 vec.push(child.id());
                 return Ok(vec);
             }
             JobExpr::Type2(box lhs_cmd_expr, JobOp::Pipe, box rhs_job_expr) => {
-                let child = interpret_cmd_expr(lhs_cmd_expr)
+                let child = interpret_cmd_expr(lhs_cmd_expr)?
                     .stdin(stdio)
                     .stdout(Stdio::piped())
                     .spawn()?;
