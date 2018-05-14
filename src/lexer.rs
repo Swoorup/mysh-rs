@@ -92,7 +92,7 @@ impl Tokenizer for str {
                 '\t' | ' ' => Some(Token::WhiteSpace),
                 '"' | '\'' => {
                     // extract string literal in between quotes
-                    let c = it.position(|(_, _ch)| _ch == ch).ok_or("failed finding matching quote")?;
+                    let c = it.position(|(_, _ch)| _ch == ch).ok_or("cannot find endin quote")?;
                     let (start, end) = (i + 1, i + c + 1);
                     Some(Token::new_quotedstring(&self[start..end]))
                 }
