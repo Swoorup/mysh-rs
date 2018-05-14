@@ -2,6 +2,7 @@ use parser::*;
 use std::collections::VecDeque;
 use std::mem;
 use std::vec;
+use std::fmt;
 
 lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
@@ -20,9 +21,14 @@ fn starts_with_symbol(line: &str) -> Option<&'static str> {
         .map(|sym| *sym)
 }
 
-#[derive(Debug)]
 pub struct TokenContainer<'a> {
     token_list: VecDeque<Token<'a>>,
+}
+
+impl<'a> fmt::Debug for TokenContainer<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.token_list)
+    }
 }
 
 impl<'a> TokenContainer<'a> {

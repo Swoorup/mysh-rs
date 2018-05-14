@@ -1,11 +1,11 @@
 #![feature(nll)]
 #![feature(box_syntax, box_patterns)]
 
+use std::env;
 use std::io;
 use std::io::Write;
 
-#[macro_use]
-extern crate lazy_static;
+#[macro_use] extern crate lazy_static;
 extern crate matches;
 extern crate nix;
 
@@ -34,12 +34,20 @@ fn main() {
             return;
         }
 
+        let debug_print = env::var("DEBUG_PRINT").is_ok();
+
         // put it to lexer
         match input.as_str().tokenize() {
             Ok(tokens) => {
+                if debug_print {
+                    println!("Tokens: {:?}", &tokens);
+                }
                 let mut parser = Parser::new(tokens.iter());
                 match parser.parse() {
                     Ok(Some(expr)) => {
+                        if debug_print {
+                            println!("Syntax Tree: \n{:#?}\n", &expr);
+                        }
                         if let Err(e) = interpret(*expr) {
                             println!("Error executing: {}", e);
                         }

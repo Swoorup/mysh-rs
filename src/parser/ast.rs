@@ -19,6 +19,7 @@
  *
  *
 **/
+use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum CommandLineOp {
@@ -56,8 +57,17 @@ pub enum CommandExpr {
     Type2(Box<SimpleCmdExpr>, CommandOp, String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub enum SimpleCmdExpr {
     Exe(String),
     ExeWithArg(String, Vec<String>),
+}
+
+impl fmt::Debug for SimpleCmdExpr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            SimpleCmdExpr::Exe(exepath) => write!(f, "{:?}", exepath),
+            SimpleCmdExpr::ExeWithArg(exepath, args) => write!(f, "{:?} {:?}", exepath, args),
+        }
+    }
 }
