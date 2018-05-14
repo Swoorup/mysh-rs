@@ -1,16 +1,29 @@
+use builtin::*;
 use nix;
 use nix::unistd::Pid;
 use parser::*;
 use std::fs::File;
 use std::io::Result;
 use std::io::{Error, ErrorKind};
+use std::os::unix::process::CommandExt;
 use std::process::{Command, Stdio};
 
 pub fn interpret_simplecmd_expr(expr: &SimpleCmdExpr) -> Command {
     match expr {
-        SimpleCmdExpr::Exe(exepath) => Command::new(exepath),
+        SimpleCmdExpr::Exe(exepath) => {
+            let mut cmd = Command::new(exepath);
+            cmd.before_exec(|| {
+                disable_shell_signal_handlers();
+                Ok(())
+            });
+            cmd
+        }
         SimpleCmdExpr::ExeWithArg(exepath, args) => {
             let mut cmd = Command::new(exepath);
+            cmd.before_exec(|| {
+                disable_shell_signal_handlers();
+                Ok(())
+            });
             cmd.args(args);
             cmd
         }

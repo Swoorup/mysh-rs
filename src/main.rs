@@ -20,12 +20,19 @@ use lexer::Tokenizer;
 use parser::Parser;
 
 fn main() {
+    set_shell_signal_handlers();
+
     loop {
         print!("{}", get_prompt());
         io::stdout().flush().expect("Failed to flush");
 
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
+        
+        // end of stream
+        if input.is_empty() {
+            return;
+        }
 
         // put it to lexer
         match input.as_str().tokenize() {
