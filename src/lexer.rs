@@ -39,68 +39,64 @@ impl<'a> Tokenizer<'a> {
         let mut start = 0;
         let mut capture_state = false;
 
-        loop {
-            if let Some((i, ch)) = it.next() {
-                let current_token: Option<Token> = match ch {
-                    '\\' => {
-                        if let Some((_, ch)) = it.next() {
-                            Some(Token::new_varstring(ch.to_string()))
-                        } else {
-                            None
+        while let Some((i, ch)) = it.next() {
+            let current_token: Option<Token> = match ch {
+                '\\' => {
+                    if let Some((_, ch)) = it.next() {
+                        Some(Token::new_varstring(ch.to_string()))
+                    } else {
+                        None
+                    }
+                }
+                '\t' | ' ' => Some(Token::WhiteSpace),
+                '"' | '\'' => {
+                    // extract string literal in between quotes
+                    let c = it.position(|(_, _ch)| _ch == ch).unwrap();
+                    let (start, end) = (i + 1, i + c + 1);
+                    Some(Token::new_quotedstring(&string[start..end]))
+                }
+                _ => {
+                    let remaining_str = &string[i..];
+                    if let Some(s) = starts_with_symbol(remaining_str) {
+                        [1..s.len()].iter().for_each(|_| {
+                            it.next();
+                        });
+                        Some(Token::Symbol(s))
+                    } else {
+                        if !capture_state {
+                            capture_state = true;
+                            start = i;
                         }
+                        None
                     }
-                    '\t' | ' ' => Some(Token::WhiteSpace),
-                    '"' | '\'' => {
-                        // extract string literal in between quotes
-                        let c = it.position(|(_, _ch)| _ch == ch).unwrap();
-                        let (start, end) = (i + 1, i + c + 1);
-                        Some(Token::new_quotedstring(&string[start..end]))
-                    }
-                    _ => {
-                        let remaining_str = &string[i..];
-                        if let Some(s) = starts_with_symbol(remaining_str) {
-                            [1..s.len()].iter().for_each(|_| {
-                                it.next();
-                            });
-                            Some(Token::Symbol(s))
-                        } else {
-                            if !capture_state {
-                                capture_state = true;
-                                start = i;
-                            }
-                            None
-                        }
-                    }
-                };
+                }
+            };
 
-                if capture_state && current_token.is_some() {
-                    capture_state = false;
-                    let end = i;
-                    self.token_list
-                        .push_back(Token::new_varstring(&string[start..end]));
-                }
-
-                match current_token {
-                    Some(Token::WhiteSpace) => {
-                        // ignore duplicates whitespace
-                        if !self.token_list.is_empty()
-                            && self.token_list.back() != Some(&Token::WhiteSpace)
-                        {
-                            self.token_list.push_back(Token::WhiteSpace);
-                        }
-                    }
-                    Some(tok) => {
-                        self.token_list.push_back(tok);
-                    }
-                    None => (),
-                }
-            } else {
-                if capture_state {
-                    self.token_list
-                        .push_back(Token::new_varstring(&string[start..]));
-                }
-                break;
+            if capture_state && current_token.is_some() {
+                capture_state = false;
+                let end = i;
+                self.token_list
+                    .push_back(Token::new_varstring(&string[start..end]));
             }
+
+            match current_token {
+                Some(Token::WhiteSpace) => {
+                    // ignore duplicates whitespace
+                    if !self.token_list.is_empty()
+                        && self.token_list.back() != Some(&Token::WhiteSpace)
+                    {
+                        self.token_list.push_back(Token::WhiteSpace);
+                    }
+                }
+                Some(tok) => {
+                    self.token_list.push_back(tok);
+                }
+                None => (),
+            }
+        }
+        if capture_state {
+            self.token_list
+                .push_back(Token::new_varstring(&string[start..]));
         }
 
         self.flatten();
