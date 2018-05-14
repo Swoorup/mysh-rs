@@ -20,91 +20,15 @@ fn starts_with_symbol(line: &str) -> Option<&'static str> {
         .map(|sym| *sym)
 }
 
-pub struct Tokenizer<'a> {
+#[derive(Debug)]
+pub struct TokenContainer<'a> {
     token_list: VecDeque<Token<'a>>,
 }
 
-impl<'a> Tokenizer<'a> {
-    pub fn new(string: &'a str) -> Tokenizer<'a> {
-        let mut tokenizer = Tokenizer {
-            token_list: VecDeque::new(),
-        };
-        tokenizer.tokenize(string);
-        tokenizer
-    }
-
-    fn tokenize(&mut self, string: &'a str) {
-        let mut it = string.chars().enumerate().peekable();
-
-        let mut start = 0;
-        let mut capture_state = false;
-
-        while let Some((i, ch)) = it.next() {
-            let current_token: Option<Token> = match ch {
-                '\\' => {
-                    if let Some((_, ch)) = it.next() {
-                        Some(Token::new_varstring(ch.to_string()))
-                    } else {
-                        None
-                    }
-                }
-                '\t' | ' ' => Some(Token::WhiteSpace),
-                '"' | '\'' => {
-                    // extract string literal in between quotes
-                    let c = it.position(|(_, _ch)| _ch == ch).unwrap();
-                    let (start, end) = (i + 1, i + c + 1);
-                    Some(Token::new_quotedstring(&string[start..end]))
-                }
-                _ => {
-                    let remaining_str = &string[i..];
-                    if let Some(s) = starts_with_symbol(remaining_str) {
-                        [1..s.len()].iter().for_each(|_| {
-                            it.next();
-                        });
-                        Some(Token::Symbol(s))
-                    } else {
-                        if !capture_state {
-                            capture_state = true;
-                            start = i;
-                        }
-                        None
-                    }
-                }
-            };
-
-            if capture_state && current_token.is_some() {
-                capture_state = false;
-                let end = i;
-                self.token_list
-                    .push_back(Token::new_varstring(&string[start..end]));
-            }
-
-            match current_token {
-                Some(Token::WhiteSpace) => {
-                    // ignore duplicates whitespace
-                    if !self.token_list.is_empty()
-                        && self.token_list.back() != Some(&Token::WhiteSpace)
-                    {
-                        self.token_list.push_back(Token::WhiteSpace);
-                    }
-                }
-                Some(tok) => {
-                    self.token_list.push_back(tok);
-                }
-                None => (),
-            }
-        }
-        if capture_state {
-            self.token_list
-                .push_back(Token::new_varstring(&string[start..]));
-        }
-
-        self.flatten();
-    }
-
+impl<'a> TokenContainer<'a> {
     // join literals, flatten glob characters
     // glob flatten -> NOT IMPLEMENTED
-    fn flatten(&mut self) {
+    fn flatten(mut self) -> Self {
         // turn Token::QuotedString into Token::VarString
         for tok in self.token_list.iter_mut() {
             if let Token::QuotedString(_) = *tok {
@@ -135,6 +59,8 @@ impl<'a> Tokenizer<'a> {
         // remove newline and whitespace
         self.token_list
             .retain(|tok| *tok != Token::WhiteSpace && *tok != Token::Symbol("\n"));
+
+        self
     }
 
     pub fn iter(&self) -> impl TokenIter {
@@ -142,9 +68,81 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
+pub trait Tokenizer {
+    fn tokenize(&self) -> Result<TokenContainer, String>;
+}
+
+impl Tokenizer for str {
+    fn tokenize(&self) -> Result<TokenContainer, String> {
+        let mut token_list: VecDeque<Token> = VecDeque::new();
+        let mut it = self.chars().enumerate().peekable();
+
+        let mut start = 0;
+        let mut capture_state = false;
+
+        while let Some((i, ch)) = it.next() {
+            let current_token: Option<Token> = match ch {
+                '\\' => {
+                    if let Some((_, ch)) = it.next() {
+                        Some(Token::new_varstring(ch.to_string()))
+                    } else {
+                        None
+                    }
+                }
+                '\t' | ' ' => Some(Token::WhiteSpace),
+                '"' | '\'' => {
+                    // extract string literal in between quotes
+                    let c = it.position(|(_, _ch)| _ch == ch).ok_or("failed finding matching quote")?;
+                    let (start, end) = (i + 1, i + c + 1);
+                    Some(Token::new_quotedstring(&self[start..end]))
+                }
+                _ => {
+                    let remaining_str = &self[i..];
+                    if let Some(s) = starts_with_symbol(remaining_str) {
+                        Some(Token::Symbol(s))
+                    } else {
+                        if !capture_state {
+                            capture_state = true;
+                            start = i;
+                        }
+                        None
+                    }
+                }
+            };
+
+            if capture_state && current_token.is_some() {
+                capture_state = false;
+                let end = i;
+                token_list.push_back(Token::new_varstring(&self[start..end]));
+            }
+
+            match current_token {
+                Some(Token::WhiteSpace) => {
+                    // ignore duplicates whitespace
+                    if !token_list.is_empty() && token_list.back() != Some(&Token::WhiteSpace) {
+                        token_list.push_back(Token::WhiteSpace);
+                    }
+                }
+                Some(tok) => {
+                    token_list.push_back(tok);
+                }
+                None => (),
+            }
+        }
+        if capture_state {
+            token_list.push_back(Token::new_varstring(&self[start..]));
+        }
+
+        Ok(TokenContainer {
+            token_list: token_list,
+        }.flatten())
+    }
+}
+
 #[test]
 fn test_analyzer() {
-    let lexer = Tokenizer::new(" echo void & sleep 1000h; echo '%^;'");
+    let lexer = " echo void &sleep 1000h;echo '%^;'".tokenize().unwrap();
+    println!("{:?}", lexer);
 
     let mut it = lexer.iter();
     assert!(it.next() == Some(&Token::new_varstring("echo")));
