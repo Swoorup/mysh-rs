@@ -140,11 +140,11 @@ impl Tokenizer for str {
 }
 
 #[test]
-fn test_analyzer() {
-    let lexer = " echo void &sleep 1000h;echo '%^;'".tokenize().unwrap();
-    println!("{:?}", lexer);
+fn test_tokenizer() {
+    let tokens = " echo void &'sle''ep' 1000h;echo '%^;'".tokenize().unwrap();
+    println!("{:?}", tokens);
 
-    let mut it = lexer.iter();
+    let mut it = tokens.iter();
     assert!(it.next() == Some(&Token::new_varstring("echo")));
     assert!(it.next() == Some(&Token::new_varstring("void")));
     assert!(it.next() == Some(&Token::Symbol("&")));
