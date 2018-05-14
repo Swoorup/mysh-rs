@@ -7,6 +7,7 @@ use std::io::Write;
 #[macro_use]
 extern crate lazy_static;
 extern crate nix;
+extern crate matches;
 
 mod builtin;
 mod interpreter;

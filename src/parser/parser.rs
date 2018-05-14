@@ -139,5 +139,29 @@ where
         }
         Ok(syntree)
     }
+}
 
+#[test]
+fn test_cmdline_expr() {
+    use lexer::*;
+    use matches::*;
+    let input = "ls > file; cat < file";
+    let tokens = input.tokenize().unwrap();
+    let mut parser = Parser::new(tokens.iter());
+    assert_matches!(
+        parser.parse().unwrap().unwrap(),
+        box CommandLineExpr::Type3(
+            box JobExpr::Type1(box CommandExpr::Type2(
+                box SimpleCmdExpr::Exe(_),
+                CommandOp::RedirectOut,
+                _,
+            )),
+            CommandLineOp::Sequence,
+            box CommandLineExpr::Type1(box JobExpr::Type1(box CommandExpr::Type2(
+                box SimpleCmdExpr::Exe(_),
+                CommandOp::RedirectIn,
+                _,
+            ))),
+        )
+    );
 }

@@ -6,3 +6,4 @@ authors = ["Swoorup Joshi <swoorupj@gmail.com>"]
 [dependencies]
 lazy_static = "1.0"
 nix = "0.10.0"
+matches = "0.1.6"
