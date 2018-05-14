@@ -41,7 +41,7 @@ impl<'a> TokenContainer<'a> {
 
         // stitch adjacent VarStrings without seperation characters
         let mut i = 0;
-        while i != self.token_list.len() - 1 {
+        while !self.token_list.is_empty() && i != self.token_list.len() - 1 {
             match (&self.token_list[i], &self.token_list[i + 1]) {
                 (Token::VarString(_), Token::VarString(_)) => {
                     let m = self.token_list.remove(i + 1).unwrap();
