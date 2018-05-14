@@ -37,47 +37,44 @@ impl<'a> Tokenizer<'a> {
         let mut it = string.chars().enumerate().peekable();
 
         let mut start = 0;
-        let mut capturing = false;
+        let mut capture_state = false;
 
         loop {
             if let Some((i, ch)) = it.next() {
-                let mut omit_current_ch_for_capture = true;
-                let mut current_token: Option<Token> = None;
-
-                match ch {
+                let current_token: Option<Token> = match ch {
                     '\\' => {
                         if let Some((_, ch)) = it.next() {
-                            current_token = Some(Token::new_varstring(ch.to_string()));
+                            Some(Token::new_varstring(ch.to_string()))
+                        } else {
+                            None
                         }
                     }
-                    '\t' | ' ' => {
-                        current_token = Some(Token::WhiteSpace);
-                    }
+                    '\t' | ' ' => Some(Token::WhiteSpace),
                     '"' | '\'' => {
                         // extract string literal in between quotes
                         let c = it.position(|(_, _ch)| _ch == ch).unwrap();
                         let (start, end) = (i + 1, i + c + 1);
-                        current_token = Some(Token::new_quotedstring(&string[start..end]));
+                        Some(Token::new_quotedstring(&string[start..end]))
                     }
                     _ => {
                         let remaining_str = &string[i..];
                         if let Some(s) = starts_with_symbol(remaining_str) {
-                            current_token = Some(Token::Symbol(s));
-                            for _ in 1..s.len() {
+                            [1..s.len()].iter().for_each(|_| {
                                 it.next();
-                            }
+                            });
+                            Some(Token::Symbol(s))
                         } else {
-                            omit_current_ch_for_capture = false;
-                            if !capturing {
-                                capturing = true;
+                            if !capture_state {
+                                capture_state = true;
                                 start = i;
                             }
+                            None
                         }
                     }
-                }
+                };
 
-                if capturing && omit_current_ch_for_capture {
-                    capturing = false;
+                if capture_state && current_token.is_some() {
+                    capture_state = false;
                     let end = i;
                     self.token_list
                         .push_back(Token::new_varstring(&string[start..end]));
@@ -98,7 +95,7 @@ impl<'a> Tokenizer<'a> {
                     None => (),
                 }
             } else {
-                if capturing {
+                if capture_state {
                     self.token_list
                         .push_back(Token::new_varstring(&string[start..]));
                 }
