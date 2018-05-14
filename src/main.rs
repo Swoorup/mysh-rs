@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 #![allow(unused_variables)]
 #![feature(nll)]
 #![feature(box_syntax, box_patterns)]
@@ -25,7 +24,6 @@ fn main() {
         print!("{}", get_prompt());
         io::stdout().flush().expect("Failed to flush");
 
-        // read input
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
 
@@ -35,9 +33,14 @@ fn main() {
         // use iter
         let mut parser = Parser::new(tokens.iter());
         match parser.parse() {
-            Ok(Some(expr)) => interpret(*expr),
+            Ok(Some(expr)) => {
+               if let Err(e) =  interpret(*expr) {
+                   println!("Error executing: {}", e);
+               }
+            }
+
             Ok(None) => (),
             Err(e) => println!("Error in parsing: {}", e),
-        }
+        };
     }
 }
