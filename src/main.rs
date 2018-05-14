@@ -6,8 +6,8 @@ use std::io::Write;
 
 #[macro_use]
 extern crate lazy_static;
-extern crate nix;
 extern crate matches;
+extern crate nix;
 
 mod builtin;
 mod interpreter;
@@ -28,7 +28,7 @@ fn main() {
 
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
-        
+
         // end of stream
         if input.is_empty() {
             return;
