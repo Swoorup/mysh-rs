@@ -1,2 +1,4 @@
-Convert &String to &str for idiomatic code
-Use Atom interned strings
+* Use string references in parser
+* Use interned strings?
+* Fix redirection
+* Support built-in commands like cd, prompt, 
