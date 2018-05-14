@@ -10,7 +10,7 @@ impl<'a, T> Parser<T>
 where
     T: TokenIter<'a>,
 {
-    pub fn new(toker_iter: T) -> Parser<T> {
+    pub fn new(toker_iter: T) -> Self {
         Parser {
             tok_iter: toker_iter,
         }

@@ -27,19 +27,21 @@ fn main() {
         io::stdin().read_line(&mut input).unwrap();
 
         // put it to lexer
-        let tokens = Tokenizer::new(&input);
+        match input.as_str().tokenize() {
+            Ok(tokens) => {
+                let mut parser = Parser::new(tokens.iter());
+                match parser.parse() {
+                    Ok(Some(expr)) => {
+                        if let Err(e) = interpret(*expr) {
+                            println!("Error executing: {}", e);
+                        }
+                    }
 
-        // use iter
-        let mut parser = Parser::new(tokens.iter());
-        match parser.parse() {
-            Ok(Some(expr)) => {
-               if let Err(e) =  interpret(*expr) {
-                   println!("Error executing: {}", e);
-               }
+                    Ok(None) => (),
+                    Err(e) => println!("Error in parsing: {}", e),
+                };
             }
-
-            Ok(None) => (),
-            Err(e) => println!("Error in parsing: {}", e),
-        };
+            Err(e) => println!("Error in lexing: {}", e),
+        }
     }
 }
