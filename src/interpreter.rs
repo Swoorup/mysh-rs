@@ -52,7 +52,7 @@ pub fn interpret_cmd_expr(expr: &CommandExpr) -> Result<Command> {
 
 pub fn interpret_job_expr(expr: &JobExpr) -> Result<Vec<u32>> {
     let mut stdio = Stdio::inherit();
-    let mut vec: Vec<u32> = Vec::new();
+    let mut vec = vec![];
 
     let mut inner_job_expr = expr;
     loop {
