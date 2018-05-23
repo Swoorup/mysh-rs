@@ -81,7 +81,7 @@ pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
         let mut result: Result<()> = Ok(());
         job.iter().for_each(|id| {
             let pid = Pid::from_raw(*id as i32);
-            if let Err(_) = nix::sys::wait::waitpid(pid, None) {
+            if nix::sys::wait::waitpid(pid, None).is_err() {
                 result = Err(Error::from(ErrorKind::Other));
             }
         });
@@ -91,7 +91,7 @@ pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
     match expr {
         CommandLineExpr::Type1(box job_expr)
         | CommandLineExpr::Type2(box job_expr, CommandLineOp::Sequence) => {
-            interpret_job_expr(job_expr).and_then(|v| wait_job(v))
+            interpret_job_expr(job_expr).and_then(wait_job)
         }
         CommandLineExpr::Type2(box job_expr, CommandLineOp::Background) => {
             interpret_job_expr(job_expr).map(|_| ())
@@ -104,7 +104,7 @@ pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
                     }
                 }
                 CommandLineOp::Sequence => {
-                    if let Err(e) = interpret_job_expr(job_expr).and_then(|v| wait_job(v)) {
+                    if let Err(e) = interpret_job_expr(job_expr).and_then(wait_job) {
                         return Err(e);
                     }
                 }
@@ -115,6 +115,6 @@ pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
     }
 }
 
-pub fn interpret(expr: CommandLineExpr) -> Result<()> {
+pub fn interpret(expr: &CommandLineExpr) -> Result<()> {
     interpret_cmdline_expr(&expr)
 }

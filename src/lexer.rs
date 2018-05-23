@@ -36,7 +36,7 @@ impl<'a> TokenContainer<'a> {
     // glob flatten -> NOT IMPLEMENTED
     fn flatten(mut self) -> Self {
         // turn Token::QuotedString into Token::VarString
-        for tok in self.token_list.iter_mut() {
+        for tok in &mut self.token_list {
             if let Token::QuotedString(_) = *tok {
                 let quoted_token = mem::replace(tok, Token::default());
                 if let Token::QuotedString(s) = quoted_token {
@@ -140,7 +140,7 @@ impl Tokenizer for str {
         }
 
         Ok(TokenContainer {
-            token_list: token_list,
+            token_list,
         }.flatten())
     }
 }

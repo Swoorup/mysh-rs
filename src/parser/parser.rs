@@ -21,17 +21,19 @@ where
 
         let mut cloned_iter = self.tok_iter.clone();
         let tok = cloned_iter.next();
-        if tok.is_none() || !tok.unwrap().is_symbol()
+        if tok.is_none()
+            || !tok.unwrap().is_symbol()
             || !(tok.unwrap().symbol().unwrap() == "&" || tok.unwrap().symbol().unwrap() == ";")
         {
             return Some(Box::new(CommandLineExpr::Type1(job_expr)));
         }
 
         let symbol = tok.unwrap().symbol().unwrap();
-        let mut cmd_line_op = CommandLineOp::Background;
-        if symbol == ";" {
-            cmd_line_op = CommandLineOp::Sequence;
-        }
+        let cmd_line_op = if symbol == ";" {
+            CommandLineOp::Sequence
+        } else {
+            CommandLineOp::Background
+        };
 
         self.tok_iter.next();
         let cloned_iter = self.tok_iter.clone();
@@ -41,11 +43,11 @@ where
             return Some(Box::new(CommandLineExpr::Type2(job_expr, cmd_line_op)));
         }
 
-        return Some(Box::new(CommandLineExpr::Type3(
+        Some(Box::new(CommandLineExpr::Type3(
             job_expr,
             cmd_line_op,
             next_cmdline_expr.unwrap(),
-        )));
+        )))
     }
 
     pub fn create_job_expr(&mut self) -> Option<Box<JobExpr>> {
@@ -64,11 +66,11 @@ where
             return None;
         }
 
-        return Some(Box::new(JobExpr::Type2(
+        Some(Box::new(JobExpr::Type2(
             command_expr,
             JobOp::Pipe,
             next_job_expr.unwrap(),
-        )));
+        )))
     }
 
     pub fn create_command_expr(&mut self) -> Option<Box<CommandExpr>> {
@@ -76,17 +78,19 @@ where
 
         let mut cloned_iter = self.tok_iter.clone().peekable();
         let tok = cloned_iter.next();
-        if tok.is_none() || !tok.unwrap().is_symbol()
+        if tok.is_none()
+            || !tok.unwrap().is_symbol()
             || !(tok.unwrap().symbol().unwrap() == "<" || tok.unwrap().symbol().unwrap() == ">")
         {
             return Some(Box::new(CommandExpr::Type1(simplecmd_expr)));
         }
 
         let symbol = tok.unwrap().symbol().unwrap();
-        let mut redir = CommandOp::RedirectIn;
-        if symbol == ">" {
-            redir = CommandOp::RedirectOut;
-        }
+        let redir = if symbol == ">" {
+            CommandOp::RedirectOut
+        } else {
+            CommandOp::RedirectIn
+        };
 
         let tok = cloned_iter.next();
         if tok.is_none() || !tok.unwrap().is_varstring() {
@@ -96,11 +100,11 @@ where
         for _ in 0..2 {
             self.tok_iter.next();
         }
-        return Some(Box::new(CommandExpr::Type2(
+        Some(Box::new(CommandExpr::Type2(
             simplecmd_expr,
             redir,
             tok.unwrap().varstring().unwrap(),
-        )));
+        )))
     }
 
     pub fn create_simplecmd_expr(&mut self) -> Option<Box<SimpleCmdExpr>> {

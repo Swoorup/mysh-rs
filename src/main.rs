@@ -48,7 +48,7 @@ fn main() {
                         if debug_print {
                             println!("Syntax Tree: \n{:#?}\n", &expr);
                         }
-                        if let Err(e) = interpret(*expr) {
+                        if let Err(e) = interpret(&*expr) {
                             println!("Error executing: {}", e);
                         }
                     }
