@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 use std::mem;
 use std::vec;
 use std::fmt;
+use lazy_static::lazy_static;
 
 lazy_static! {
     static ref SYMBOLS: vec::Vec<&'static str> = {
@@ -26,7 +27,7 @@ pub struct TokenContainer<'a> {
 }
 
 impl<'a> fmt::Debug for TokenContainer<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.token_list)
     }
 }
@@ -69,25 +70,25 @@ impl<'a> TokenContainer<'a> {
         self
     }
 
-    pub fn iter(&self) -> impl TokenIter {
+    pub fn iter(&self) -> impl TokenIter<'_> {
         self.token_list.iter()
     }
 }
 
 pub trait Tokenizer {
-    fn tokenize(&self) -> Result<TokenContainer, String>;
+    fn tokenize(&self) -> Result<TokenContainer<'_>, String>;
 }
 
 impl Tokenizer for str {
-    fn tokenize(&self) -> Result<TokenContainer, String> {
-        let mut token_list: VecDeque<Token> = VecDeque::new();
+    fn tokenize(&self) -> Result<TokenContainer<'_>, String> {
+        let mut token_list: VecDeque<Token<'_>> = VecDeque::new();
         let mut it = self.chars().enumerate().peekable();
 
         let mut start = 0;
         let mut capture_state = false;
 
         while let Some((i, ch)) = it.next() {
-            let current_token: Option<Token> = match ch {
+            let current_token: Option<Token<'_>> = match ch {
                 '\\' => {
                     if let Some((_, ch)) = it.next() {
                         Some(Token::new_varstring(ch.to_string()))

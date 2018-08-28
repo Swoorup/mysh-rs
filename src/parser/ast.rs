@@ -64,7 +64,7 @@ pub enum SimpleCmdExpr {
 }
 
 impl fmt::Debug for SimpleCmdExpr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
             SimpleCmdExpr::Exe(exepath) => write!(f, "{:?}", exepath),
             SimpleCmdExpr::ExeWithArg(exepath, args) => write!(f, "{:?} {:?}", exepath, args),

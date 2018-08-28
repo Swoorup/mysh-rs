@@ -73,25 +73,28 @@ pub fn interpret_job_expr(expr: &JobExpr) -> Result<Vec<u32>> {
                 inner_job_expr = rhs_job_expr;
             }
         };
-    }
+    };
 }
 
 pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
-    let wait_job = |job: Vec<u32>| -> Result<()> {
+    let fn_wait_for_job = |job: Vec<u32>| -> Result<()> {
+
         let mut result: Result<()> = Ok(());
+
         job.iter().for_each(|id| {
             let pid = Pid::from_raw(*id as i32);
             if nix::sys::wait::waitpid(pid, None).is_err() {
                 result = Err(Error::from(ErrorKind::Other));
             }
         });
+
         result
     };
 
     match expr {
         CommandLineExpr::Type1(box job_expr)
         | CommandLineExpr::Type2(box job_expr, CommandLineOp::Sequence) => {
-            interpret_job_expr(job_expr).and_then(wait_job)
+            interpret_job_expr(job_expr).and_then(fn_wait_for_job)
         }
         CommandLineExpr::Type2(box job_expr, CommandLineOp::Background) => {
             interpret_job_expr(job_expr).map(|_| ())
@@ -99,14 +102,12 @@ pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
         CommandLineExpr::Type3(box job_expr, op, box cmdline_expr) => {
             match op {
                 CommandLineOp::Background => {
-                    if let Err(e) = interpret_job_expr(job_expr) {
-                        return Err(e);
-                    }
+                    interpret_job_expr(job_expr)?;
+                   
                 }
                 CommandLineOp::Sequence => {
-                    if let Err(e) = interpret_job_expr(job_expr).and_then(wait_job) {
-                        return Err(e);
-                    }
+                    interpret_job_expr(job_expr)
+                        .and_then(fn_wait_for_job)?;
                 }
             }
 

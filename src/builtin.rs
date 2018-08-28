@@ -1,6 +1,7 @@
 use nix::sys::signal::*;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
+use lazy_static::lazy_static;
 
 lazy_static! {
     static ref PROMPT: Mutex<String> = Mutex::new("λ ".to_string());

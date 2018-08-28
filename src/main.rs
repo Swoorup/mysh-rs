@@ -1,14 +1,12 @@
 #![feature(nll)]
 #![feature(box_syntax, box_patterns)]
-#![feature(rust_2018_preview, uniform_paths)]
+#![feature(rust_2018_preview)]
+
+#![warn(rust_2018_idioms)]
 
 use std::env;
 use std::io;
 use std::io::Write;
-
-#[macro_use] extern crate lazy_static;
-extern crate matches;
-extern crate nix;
 
 mod builtin;
 mod interpreter;
