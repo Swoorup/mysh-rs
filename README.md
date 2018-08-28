@@ -1,5 +1,7 @@
 # mysh-rs
-This is a clone of [swoorup/mysh](https://github.com/Swoorup/mysh) written in c for learning rust language.
+This is a clone of [swoorup/mysh](https://github.com/Swoorup/mysh) written
+in c for learning rust language. This project is also my personal testbed
+for rust nightly features :joy:
 
 This shell is severely limited and extremely basic as of now. It supports the following features:
 * Pipes `ps aux | grep bash`
