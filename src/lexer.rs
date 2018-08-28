@@ -1,4 +1,4 @@
-use parser::*;
+use crate::parser::*;
 use std::collections::VecDeque;
 use std::mem;
 use std::vec;

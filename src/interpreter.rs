@@ -1,7 +1,7 @@
-use builtin::*;
-use nix;
-use nix::unistd::Pid;
-use parser::*;
+use crate::builtin::*;
+use ::nix;
+use ::nix::unistd::Pid;
+use crate::parser::*;
 use std::fs::File;
 use std::io::Result;
 use std::io::{Error, ErrorKind};

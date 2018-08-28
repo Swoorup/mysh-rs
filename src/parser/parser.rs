@@ -1,6 +1,6 @@
 use std::iter::Iterator;
 
-use parser::*;
+use crate::parser::*;
 
 pub struct Parser<T> {
     tok_iter: T,
@@ -147,7 +147,7 @@ where
 
 #[test]
 fn test_cmdline_expr() {
-    use lexer::*;
+    use crate::lexer::*;
     use matches::*;
     let input = "ls > file; cat < file";
     let tokens = input.tokenize().unwrap();

@@ -15,10 +15,10 @@ mod interpreter;
 mod lexer;
 mod parser;
 
-use builtin::*;
-use interpreter::interpret;
-use lexer::Tokenizer;
-use parser::Parser;
+use crate::builtin::*;
+use crate::interpreter::interpret;
+use crate::lexer::Tokenizer;
+use crate::parser::Parser;
 
 fn main() {
     set_shell_signal_handlers();
