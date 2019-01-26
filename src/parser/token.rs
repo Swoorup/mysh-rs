@@ -18,14 +18,6 @@ impl<'a> Default for Token<'a> {
 }
 
 impl<'a> Token<'a> {
-    pub fn new_quotedstring<T: Into<Cow<'a, str>>>(x: T) -> Self {
-        Token::QuotedString(x.into())
-    }
-
-    pub fn new_varstring<T: Into<Cow<'a, str>>>(x: T) -> Self {
-        Token::VarString(x.into())
-    }
-
     pub fn varstring(&self) -> Option<String> {
         match self {
             Token::VarString(s) => Some(s.to_string()),

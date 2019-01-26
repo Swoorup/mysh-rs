@@ -1,8 +1,5 @@
 use crate::parser::*;
-use std::collections::VecDeque;
-use std::mem;
-use std::vec;
-use std::fmt;
+use std::{ collections::VecDeque, mem, vec, fmt };
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -26,13 +23,13 @@ pub struct TokenContainer<'a> {
     token_list: VecDeque<Token<'a>>,
 }
 
-impl<'a> fmt::Debug for TokenContainer<'a> {
+impl fmt::Debug for TokenContainer<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.token_list)
     }
 }
 
-impl<'a> TokenContainer<'a> {
+impl TokenContainer<'_> {
     // join literals, flatten glob characters
     // glob flatten -> NOT IMPLEMENTED
     fn flatten(mut self) -> Self {
@@ -88,10 +85,10 @@ impl Tokenizer for str {
         let mut capture_state = false;
 
         while let Some((i, ch)) = it.next() {
-            let current_token: Option<Token<'_>> = match ch {
+            let current_token = match ch {
                 '\\' => {
                     if let Some((_, ch)) = it.next() {
-                        Some(Token::new_varstring(ch.to_string()))
+                        Some(Token::VarString(ch.to_string().into()))
                     } else {
                         None
                     }
@@ -101,7 +98,7 @@ impl Tokenizer for str {
                     // extract string literal in between quotes
                     let c = it.position(|(_, _ch)| _ch == ch).ok_or("cannot find endin quote")?;
                     let (start, end) = (i + 1, i + c + 1);
-                    Some(Token::new_quotedstring(&self[start..end]))
+                    Some(Token::QuotedString((&self[start..end]).into()))
                 }
                 _ => {
                     let remaining_str = &self[i..];
@@ -120,7 +117,7 @@ impl Tokenizer for str {
             if capture_state && current_token.is_some() {
                 capture_state = false;
                 let end = i;
-                token_list.push_back(Token::new_varstring(&self[start..end]));
+                token_list.push_back(Token::VarString((&self[start..end]).into()));
             }
 
             match current_token {
@@ -137,7 +134,7 @@ impl Tokenizer for str {
             }
         }
         if capture_state {
-            token_list.push_back(Token::new_varstring(&self[start..]));
+            token_list.push_back(Token::VarString((&self[start..]).into()));
         }
 
         Ok(TokenContainer {
@@ -152,7 +149,7 @@ fn test_tokenizer() {
     println!("{:?}", tokens);
 
     let mut it = tokens.iter();
-    assert!(it.next() == Some(&Token::new_varstring("echo")));
+    assert!(it.next() == Some(&Token::VarString("echo")));
     assert!(it.next() == Some(&Token::new_varstring("void")));
     assert!(it.next() == Some(&Token::Symbol("&")));
     assert!(it.next() == Some(&Token::new_varstring("sleep")));
