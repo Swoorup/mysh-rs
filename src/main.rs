@@ -1,6 +1,5 @@
 #![feature(nll)]
 #![feature(box_syntax, box_patterns)]
-#![feature(rust_2018_preview)]
 
 #![warn(rust_2018_idioms)]
 
@@ -9,20 +8,17 @@ use std::io;
 use std::io::Write;
 
 mod builtin;
-mod interpreter;
+mod interpret;
 mod lexer;
 mod parser;
 
-use crate::builtin::*;
-use crate::interpreter::interpret;
 use crate::lexer::Tokenizer;
-use crate::parser::Parser;
 
 fn main() {
-    set_shell_signal_handlers();
+    builtin::set_shell_signal_handlers();
 
     loop {
-        print!("{}", get_prompt());
+        print!("{}", builtin::get_prompt());
         io::stdout().flush().expect("Failed to flush");
 
         let mut input = String::new();
@@ -41,13 +37,13 @@ fn main() {
                 if debug_print {
                     println!("Tokens: {:?}", &tokens);
                 }
-                let mut parser = Parser::new(tokens.iter());
+                let mut parser = parser::Parser::new(tokens.iter());
                 match parser.parse() {
                     Ok(Some(expr)) => {
                         if debug_print {
                             println!("Syntax Tree: \n{:#?}\n", &expr);
                         }
-                        if let Err(e) = interpret(&*expr) {
+                        if let Err(e) = interpret::interpret(&*expr) {
                             println!("Error executing: {}", e);
                         }
                     }
