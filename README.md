@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/Swoorup/mysh-rs.svg?branch=master)](https://travis-ci.com/Swoorup/mysh-rs)
+
 # mysh-rs
 This is a clone of [swoorup/mysh](https://github.com/Swoorup/mysh) written
 in c for learning rust language. This project is also my personal testbed
