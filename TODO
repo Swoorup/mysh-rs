@@ -1,5 +1,5 @@
 * Use string references in parser instead of Clone
-* Probably refactor parser code to take in slices rather than token iterators. 
+* More functional code, please
 * Use interned strings?
 * Fix redirection
 * Support built-in commands like cd, prompt, 
