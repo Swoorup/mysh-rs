@@ -6,14 +6,10 @@ pub struct Parser<T> {
     tok_iter: T,
 }
 
-impl<'a, T> Parser<T>
-where
-    T: TokenIter<'a>,
+impl<'a, T> Parser<T> where T: TokenIter<'a>,
 {
     pub fn new(toker_iter: T) -> Self {
-        Parser {
-            tok_iter: toker_iter,
-        }
+        Parser { tok_iter: toker_iter }
     }
 
     pub fn create_commandline_expr(&mut self) -> Option<Box<CommandLineExpr>> {
@@ -86,11 +82,7 @@ where
         }
 
         let symbol = tok.unwrap().symbol().unwrap();
-        let redir = if symbol == ">" {
-            CommandOp::RedirectOut
-        } else {
-            CommandOp::RedirectIn
-        };
+        let redir = if symbol == ">" { CommandOp::RedirectOut } else { CommandOp::RedirectIn };
 
         let tok = cloned_iter.next();
         if tok.is_none() || !tok.unwrap().is_varstring() {
@@ -129,19 +121,20 @@ where
                 self.tok_iter.next();
             }
 
-            return Some(Box::new(SimpleCmdExpr::ExeWithArg(exepath, args)));
+            Some(Box::new(SimpleCmdExpr::ExeWithArg(exepath, args)))
         } else {
-            return None;
+            None
         }
     }
 
     pub fn parse(&mut self) -> Result<Option<Box<CommandLineExpr>>, String> {
         let syntree = self.create_commandline_expr();
-        let remaining_tok = self.tok_iter.next();
-        if remaining_tok.is_some() {
-            return Err(format!("Unexpected token: {:?}", remaining_tok.unwrap()));
+        if let Some(remaining_tok) = self.tok_iter.next() {
+            Err(format!("Unexpected token: {:?}", remaining_tok))
         }
-        Ok(syntree)
+        else {
+            Ok(syntree)
+        }
     }
 }
 

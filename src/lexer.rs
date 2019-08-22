@@ -1,22 +1,22 @@
+#![feature(const_fn)]
+
 use crate::parser::*;
-use std::{ collections::VecDeque, mem, vec, fmt };
-use lazy_static::lazy_static;
+use std::{ collections::VecDeque, mem, fmt };
 
-lazy_static! {
-    static ref SYMBOLS: vec::Vec<&'static str> = {
-        let mut m = vec!["&&", ";", "&", "|", ">", ">>", "<", "<<", "||", "\n"];
+const fn get_symbols() -> [&'static str; 10] {
+    let m = ["&&", ";", "&", "|", ">", ">>", "<", "<<", "||", "\n"];
 
-        // reverse sort for longest match rule
-        m.sort_by(|a, b| b.cmp(a));
-        m
-    };
+    // reverse sort for longest match rule
+    // m.sort_by(|a, b| b.cmp(a));
+    m
 }
+
+const SYMBOLS:[&str; 10] = get_symbols();
 
 fn starts_with_symbol(line: &str) -> Option<&'static str> {
     SYMBOLS
         .iter()
-        .find(|&&sym| line.starts_with(sym))
-        .map(|sym| *sym)
+        .find(|&&sym| line.starts_with(sym)).copied()
 }
 
 pub struct TokenContainer<'a> {
