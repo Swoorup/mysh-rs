@@ -149,7 +149,7 @@ fn test_tokenizer() {
     println!("{:?}", tokens);
 
     let mut it = tokens.iter();
-    assert!(it.next() == Some(&Token::VarString("echo")));
+    assert!(it.next() == Some(&Token::new_varstring("echo")));
     assert!(it.next() == Some(&Token::new_varstring("void")));
     assert!(it.next() == Some(&Token::Symbol("&")));
     assert!(it.next() == Some(&Token::new_varstring("sleep")));

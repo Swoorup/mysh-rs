@@ -12,18 +12,22 @@ pub fn interpret_simplecmd_expr(expr: &SimpleCmdExpr) -> Command {
     match expr {
         SimpleCmdExpr::Exe(exepath) => {
             let mut cmd = Command::new(exepath);
-            cmd.before_exec(|| {
-                disable_shell_signal_handlers();
-                Ok(())
-            });
+            unsafe {
+                cmd.pre_exec(|| {
+                    disable_shell_signal_handlers();
+                    Ok(())
+                });
+            }
             cmd
         }
         SimpleCmdExpr::ExeWithArg(exepath, args) => {
             let mut cmd = Command::new(exepath);
-            cmd.before_exec(|| {
-                disable_shell_signal_handlers();
-                Ok(())
-            });
+            unsafe {
+                cmd.pre_exec(|| {
+                    disable_shell_signal_handlers();
+                    Ok(())
+                });
+            }
             cmd.args(args);
             cmd
         }
@@ -103,7 +107,6 @@ pub fn interpret_cmdline_expr(expr: &CommandLineExpr) -> Result<()> {
             match op {
                 CommandLineOp::Background => {
                     interpret_job_expr(job_expr)?;
-                   
                 }
                 CommandLineOp::Sequence => {
                     interpret_job_expr(job_expr)
