@@ -18,10 +18,6 @@ impl<'a> Default for Token<'a> {
 }
 
 impl<'a> Token<'a> {
-    pub fn new_varstring(string: &'a str) -> Token<'a> {
-        Self::VarString(Cow::Borrowed(string))
-    }
-
     pub fn varstring(&self) -> Option<String> {
         match self {
             Token::VarString(s) => Some(s.to_string()),

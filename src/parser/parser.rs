@@ -35,7 +35,7 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
         let cloned_iter = self.tok_iter.clone();
         let next_cmdline_expr = self.create_commandline_expr();
         if next_cmdline_expr.is_none() {
-            self.tok_iter = cloned_iter.clone();
+            self.tok_iter = cloned_iter;
             return Some(Box::new(CommandLineExpr::Type2(job_expr, cmd_line_op)));
         }
 
@@ -114,7 +114,7 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
             let args: Vec<_> = cloned_iter
                 .by_ref()
                 .take_while(|t| t.is_varstring())
-                .map(|t| t.varstring().unwrap().clone())
+                .map(|t| t.varstring().unwrap())
                 .collect();
 
             for _ in 0..=args.len() {
