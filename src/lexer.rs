@@ -1,14 +1,10 @@
-#![feature(const_fn)]
-
 use crate::parser::*;
 use std::{ collections::VecDeque, mem, fmt };
 
 const fn get_symbols() -> [&'static str; 10] {
-    let m = ["&&", ";", "&", "|", ">", ">>", "<", "<<", "||", "\n"];
-
     // reverse sort for longest match rule
     // m.sort_by(|a, b| b.cmp(a));
-    m
+    ["&&", ";", "&", "|", ">", ">>", "<", "<<", "||", "\n"]
 }
 
 const SYMBOLS:[&str; 10] = get_symbols();
