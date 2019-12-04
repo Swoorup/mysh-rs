@@ -12,4 +12,4 @@ This shell is severely limited and extremely basic as of now. It supports the fo
 * Chaining commands `sleep 5; echo Hello World`
 
 A small demo: 
-[![asciicast](https://asciinema.org/a/vg4i0zKno7tvMjeQJTD9a1zjT.png)](https://asciinema.org/a/vg4i0zKno7tvMjeQJTD9a1zjT)
+[![asciicast](https://asciinema.org/a/285153.svg)](https://asciinema.org/a/285153)
