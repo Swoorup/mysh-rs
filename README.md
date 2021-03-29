@@ -13,3 +13,7 @@ This shell is severely limited and extremely basic as of now. It supports the fo
 
 A small demo: 
 [![asciicast](https://asciinema.org/a/285153.svg)](https://asciinema.org/a/285153)
+
+Donate: 
+
+* Bitcoin Cash: qzlulc2nw37fk2ydmvdadn3e3k7l80kz7gef7qfpef
