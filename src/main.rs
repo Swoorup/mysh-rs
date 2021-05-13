@@ -1,6 +1,5 @@
 #![feature(nll)]
 #![feature(box_syntax, box_patterns)]
-#![feature(const_fn)]
 
 #![warn(rust_2018_idioms)]
 
