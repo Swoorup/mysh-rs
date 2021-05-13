@@ -2,20 +2,31 @@ use std::iter::Iterator;
 
 use crate::parser::*;
 
-pub struct Parser<T> {
-    tok_iter: T,
+pub trait TokenStream<'a>: 
+    Iterator<Item = &'a Token<'a>> + Clone {
 }
 
-impl<'a, T> Parser<T> where T: TokenIter<'a>,
+pub trait Parse: Sized
 {
-    pub fn new(toker_iter: T) -> Self {
-        Parser { tok_iter: toker_iter }
+    type ParserError = String;
+    fn parse<'a>(input: impl TokenStream<'a>) -> Result<Option<Self>, Self::ParserError>;
+}
+
+struct ParserData<T>
+{
+    token_iterator: T
+}
+
+impl<'a, I> ParserData<I> where I: TokenStream<'a>
+{
+    pub fn new(toker_iter: I) -> Self {
+        ParserData { token_iterator: toker_iter }
     }
 
     pub fn create_commandline_expr(&mut self) -> Option<Box<CommandLineExpr>> {
         let job_expr = self.create_job_expr()?;
 
-        let mut cloned_iter = self.tok_iter.clone();
+        let mut cloned_iter = self.token_iterator.clone();
         let tok = cloned_iter.next();
         if tok.is_none()
             || !tok.unwrap().is_symbol()
@@ -31,11 +42,11 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
             CommandLineOp::Background
         };
 
-        self.tok_iter.next();
-        let cloned_iter = self.tok_iter.clone();
+        self.token_iterator.next();
+        let cloned_iter = self.token_iterator.clone();
         let next_cmdline_expr = self.create_commandline_expr();
         if next_cmdline_expr.is_none() {
-            self.tok_iter = cloned_iter;
+            self.token_iterator = cloned_iter;
             return Some(Box::new(CommandLineExpr::Type2(job_expr, cmd_line_op)));
         }
 
@@ -49,16 +60,16 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
     pub fn create_job_expr(&mut self) -> Option<Box<JobExpr>> {
         let command_expr = self.create_command_expr()?;
 
-        let mut cloned_iter = self.tok_iter.clone();
+        let mut cloned_iter = self.token_iterator.clone();
         let tok = cloned_iter.next();
         if tok.is_none() || !tok.unwrap().is_symbol() || tok.unwrap().symbol().unwrap() != "|" {
             return Some(Box::new(JobExpr::Type1(command_expr)));
         }
 
-        self.tok_iter.next();
+        self.token_iterator.next();
         let next_job_expr = self.create_job_expr();
         if next_job_expr.is_none() {
-            self.tok_iter = cloned_iter.clone();
+            self.token_iterator = cloned_iter.clone();
             return None;
         }
 
@@ -72,7 +83,7 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
     pub fn create_command_expr(&mut self) -> Option<Box<CommandExpr>> {
         let simplecmd_expr = self.create_simplecmd_expr()?;
 
-        let mut cloned_iter = self.tok_iter.clone().peekable();
+        let mut cloned_iter = self.token_iterator.clone().peekable();
         let tok = cloned_iter.next();
         if tok.is_none()
             || !tok.unwrap().is_symbol()
@@ -90,7 +101,7 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
         }
 
         for _ in 0..2 {
-            self.tok_iter.next();
+            self.token_iterator.next();
         }
         Some(Box::new(CommandExpr::Type2(
             simplecmd_expr,
@@ -100,14 +111,14 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
     }
 
     pub fn create_simplecmd_expr(&mut self) -> Option<Box<SimpleCmdExpr>> {
-        let mut cloned_iter = self.tok_iter.clone().peekable();
+        let mut cloned_iter = self.token_iterator.clone().peekable();
 
         let tok = cloned_iter.next()?;
         if let Token::VarString(filepath) = tok {
             let exepath = filepath.to_string();
 
             if cloned_iter.peek().is_none() || !cloned_iter.peek().unwrap().is_varstring() {
-                self.tok_iter.next();
+                self.token_iterator.next();
                 return Some(Box::new(SimpleCmdExpr::Exe(exepath)));
             }
 
@@ -118,7 +129,7 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
                 .collect();
 
             for _ in 0..=args.len() {
-                self.tok_iter.next();
+                self.token_iterator.next();
             }
 
             Some(Box::new(SimpleCmdExpr::ExeWithArg(exepath, args)))
@@ -129,7 +140,7 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
 
     pub fn parse(&mut self) -> Result<Option<Box<CommandLineExpr>>, String> {
         let syntree = self.create_commandline_expr();
-        if let Some(remaining_tok) = self.tok_iter.next() {
+        if let Some(remaining_tok) = self.token_iterator.next() {
             Err(format!("Unexpected token: {:?}", remaining_tok))
         }
         else {
@@ -138,13 +149,22 @@ impl<'a, T> Parser<T> where T: TokenIter<'a>,
     }
 }
 
+impl Parse for Box<CommandLineExpr> {
+    type ParserError = String;
+
+    fn parse<'a>(input: impl TokenStream<'a>) -> Result<Option<Self>, Self::ParserError> {
+        let mut data = ParserData::new(input);
+        data.parse()
+    }
+}
+
 #[test]
 fn test_cmdline_expr() {
     use crate::lexer::*;
-    use matches::*;
+    use matches::assert_matches;
     let input = "ls > file; cat < file";
     let tokens = input.tokenize().unwrap();
-    let mut parser = Parser::new(tokens.iter());
+    let mut parser = ParserData::new(tokens.iter());
     assert_matches!(
         parser.parse().unwrap().unwrap(),
         box CommandLineExpr::Type3(

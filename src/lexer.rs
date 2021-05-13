@@ -1,10 +1,10 @@
 use crate::parser::*;
-use std::{ collections::VecDeque, mem, fmt };
+use std::{collections::VecDeque, fmt, mem};
 
 const fn get_symbols() -> [&'static str; 10] {
     // reverse sort for longest match rule
     // m.sort_by(|a, b| b.cmp(a));
-    ["&&", ";", "&", "|", ">", ">>", "<", "<<", "||", "\n"]
+    ["&&", ";", "&", "|", ">>", "<<", "<", ">", "||", "\n"]
 }
 
 const SYMBOLS:[&str; 10] = get_symbols();
@@ -24,6 +24,8 @@ impl fmt::Debug for TokenContainer<'_> {
         write!(f, "{:?}", self.token_list)
     }
 }
+
+impl<'a, T: Iterator<Item = &'a Token<'a>> + Clone> TokenStream<'a> for T {}
 
 impl TokenContainer<'_> {
     // join literals, flatten glob characters
@@ -63,7 +65,7 @@ impl TokenContainer<'_> {
         self
     }
 
-    pub fn iter(&self) -> impl TokenIter<'_> {
+    pub fn get_stream(&self) -> impl TokenStream<'_>{
         self.token_list.iter()
     }
 }
@@ -141,22 +143,25 @@ impl Tokenizer for str {
 
 #[test]
 fn test_tokenizer() {
+    use std::borrow::Cow;
+
     let tokens = " echo void &'sle''ep' 1000h;echo '%^;'".tokenize().unwrap();
     println!("{:?}", tokens);
 
-    let mut it = tokens.iter();
-    assert!(it.next() == Some(&Token::new_varstring("echo")));
-    assert!(it.next() == Some(&Token::new_varstring("void")));
+    let mut it = tokens.get_stream();
+    assert!(it.next() == Some(&Token::VarString(Cow::from("echo"))));
+    assert!(it.next() == Some(&Token::VarString(Cow::from("void"))));
     assert!(it.next() == Some(&Token::Symbol("&")));
-    assert!(it.next() == Some(&Token::new_varstring("sleep")));
-    assert!(it.next() == Some(&Token::new_varstring("1000h")));
+    assert!(it.next() == Some(&Token::VarString(Cow::from("sleep"))));
+    assert!(it.next() == Some(&Token::VarString(Cow::from("1000h"))));
     assert!(it.next() == Some(&Token::Symbol(";")));
-    assert!(it.next() == Some(&Token::new_varstring("echo")));
+    assert!(it.next() == Some(&Token::VarString(Cow::from("echo"))));
 }
 
 #[test]
 fn test_symbol_presence() {
     let string = "<< Help";
+    println!("starts with {:?}", starts_with_symbol(string));
     assert!(starts_with_symbol(string) == Some("<<"));
     assert!(starts_with_symbol(&string[2..]) == None);
 }

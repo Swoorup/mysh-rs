@@ -8,9 +8,6 @@ pub enum Token<'a> {
     VarString(Cow<'a, str>), // string slice representing commands, parameters to commands, etc
 }
 
-pub trait TokenIter<'a>: Iterator<Item = &'a Token<'a>> + Clone {}
-impl<'a, T: Iterator<Item = &'a Token<'a>> + Clone> TokenIter<'a> for T {}
-
 impl<'a> Default for Token<'a> {
     fn default() -> Token<'a> {
         Token::WhiteSpace
