@@ -1,20 +1,20 @@
 /**
  *
-	<command line>	::=  	<job>
-						|	<job> '&'
-						| 	<job> '&' <command line>
-						|	<job> ';'
-						|	<job> ';' <command line>
+    <command line>	::=  	<job>
+                        |	<job> '&'
+                        | 	<job> '&' <command line>
+                        |	<job> ';'
+                        |	<job> ';' <command line>
 
-	<job>			::=		<command>
-						|	< job > '|' < command >
+    <job>			::=		<command>
+                        |	< job > '|' < command >
 
-	<command>		::=		<simple command>
-						|	<simple command> '<' <filename>
-						|	<simple command> '>' <filename>
+    <command>		::=		<simple command>
+                        |	<simple command> '<' <filename>
+                        |	<simple command> '>' <filename>
 
-	<simple command>::=		<pathname>
-						|	<simple command>  <token>
+    <simple command>::=		<pathname>
+                        |	<simple command>  <token>
  *
  *
  *
