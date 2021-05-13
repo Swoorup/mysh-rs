@@ -1,3 +1,5 @@
+//! Lexer module is responsible for splitting a string into tokens
+
 use crate::parser::*;
 use std::{collections::VecDeque, fmt, mem};
 

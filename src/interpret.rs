@@ -1,3 +1,5 @@
+//! Interpret module interprets the parsed AST 
+
 use crate::builtin::*;
 use ::nix;
 use ::nix::unistd::Pid;

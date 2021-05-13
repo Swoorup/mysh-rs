@@ -1,6 +1,7 @@
 #![feature(nll)]
 #![feature(box_syntax, box_patterns)]
 #![feature(associated_type_defaults)]
+#![feature(iter_advance_by)]
 #![warn(rust_2018_idioms)]
 
 use std::env;

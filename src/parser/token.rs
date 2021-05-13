@@ -1,3 +1,5 @@
+//! Token module containing token definitions
+
 use std::borrow::Cow;
 
 #[derive(PartialEq, Debug)]

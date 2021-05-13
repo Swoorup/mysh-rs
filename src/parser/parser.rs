@@ -1,3 +1,6 @@
+//! Parser module responsible for parsing tokens into Abstract Syntax Tree.
+//! Returns result of `CommandLineExpr` or `String` indicating what the issue was
+
 use std::iter::Iterator;
 
 use crate::parser::*;
@@ -96,18 +99,19 @@ impl<'a, I> ParserData<I> where I: TokenStream<'a>
         let redir = if symbol == ">" { CommandOp::RedirectOut } else { CommandOp::RedirectIn };
 
         let tok = cloned_iter.next();
-        if tok.is_none() || !tok.unwrap().is_varstring() {
-            return Some(Box::new(CommandExpr::Type1(simplecmd_expr))); // error unexpected token
+        match tok {
+            Some(Token::VarString(v)) => {
+                self.token_iterator.advance_by(2).unwrap();
+                Some(Box::new(CommandExpr::Type2(
+                    simplecmd_expr,
+                    redir,
+                    v.to_string()
+                )))
+            },
+            None | Some(_) => {
+                Some(Box::new(CommandExpr::Type1(simplecmd_expr))) // error unexpected token
+            }
         }
-
-        for _ in 0..2 {
-            self.token_iterator.next();
-        }
-        Some(Box::new(CommandExpr::Type2(
-            simplecmd_expr,
-            redir,
-            tok.unwrap().varstring().unwrap(),
-        )))
     }
 
     fn create_simplecmd_expr(&mut self) -> Option<Box<SimpleCmdExpr>> {
