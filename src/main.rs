@@ -1,7 +1,6 @@
 #![feature(nll)]
 #![feature(box_syntax, box_patterns)]
-#![feature(const_fn)]
-
+#![feature(associated_type_defaults)]
 #![warn(rust_2018_idioms)]
 
 use std::env;
@@ -13,7 +12,7 @@ mod interpret;
 mod lexer;
 mod parser;
 
-use crate::lexer::Tokenizer;
+use crate::{lexer::Tokenizer, parser::Parse};
 
 fn main() {
     builtin::set_shell_signal_handlers();
@@ -38,8 +37,8 @@ fn main() {
                 if debug_print {
                     println!("Tokens: {:?}", &tokens);
                 }
-                let mut parser = parser::Parser::new(tokens.iter());
-                match parser.parse() {
+                let parsed_result = tokens.get_stream().parse();
+                match parsed_result {
                     Ok(Some(expr)) => {
                         if debug_print {
                             println!("Syntax Tree: \n{:#?}\n", &expr);
