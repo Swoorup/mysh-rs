@@ -9,7 +9,7 @@ pub trait TokenStream<'a>:
 pub trait Parse: Sized
 {
     type ParserError = String;
-    fn parse<'a>(input: impl TokenStream<'a>) -> Result<Option<Self>, Self::ParserError>;
+    fn parse(self) -> Result<Option<Box<CommandLineExpr>>, Self::ParserError>;
 }
 
 struct ParserData<T>
@@ -19,11 +19,11 @@ struct ParserData<T>
 
 impl<'a, I> ParserData<I> where I: TokenStream<'a>
 {
-    pub fn new(toker_iter: I) -> Self {
+    fn new(toker_iter: I) -> Self {
         ParserData { token_iterator: toker_iter }
     }
 
-    pub fn create_commandline_expr(&mut self) -> Option<Box<CommandLineExpr>> {
+    fn create_commandline_expr(&mut self) -> Option<Box<CommandLineExpr>> {
         let job_expr = self.create_job_expr()?;
 
         let mut cloned_iter = self.token_iterator.clone();
@@ -57,7 +57,7 @@ impl<'a, I> ParserData<I> where I: TokenStream<'a>
         )))
     }
 
-    pub fn create_job_expr(&mut self) -> Option<Box<JobExpr>> {
+    fn create_job_expr(&mut self) -> Option<Box<JobExpr>> {
         let command_expr = self.create_command_expr()?;
 
         let mut cloned_iter = self.token_iterator.clone();
@@ -80,7 +80,7 @@ impl<'a, I> ParserData<I> where I: TokenStream<'a>
         )))
     }
 
-    pub fn create_command_expr(&mut self) -> Option<Box<CommandExpr>> {
+    fn create_command_expr(&mut self) -> Option<Box<CommandExpr>> {
         let simplecmd_expr = self.create_simplecmd_expr()?;
 
         let mut cloned_iter = self.token_iterator.clone().peekable();
@@ -110,7 +110,7 @@ impl<'a, I> ParserData<I> where I: TokenStream<'a>
         )))
     }
 
-    pub fn create_simplecmd_expr(&mut self) -> Option<Box<SimpleCmdExpr>> {
+    fn create_simplecmd_expr(&mut self) -> Option<Box<SimpleCmdExpr>> {
         let mut cloned_iter = self.token_iterator.clone().peekable();
 
         let tok = cloned_iter.next()?;
@@ -138,7 +138,7 @@ impl<'a, I> ParserData<I> where I: TokenStream<'a>
         }
     }
 
-    pub fn parse(&mut self) -> Result<Option<Box<CommandLineExpr>>, String> {
+    fn parse(&mut self) -> Result<Option<Box<CommandLineExpr>>, String> {
         let syntree = self.create_commandline_expr();
         if let Some(remaining_tok) = self.token_iterator.next() {
             Err(format!("Unexpected token: {:?}", remaining_tok))
@@ -149,11 +149,11 @@ impl<'a, I> ParserData<I> where I: TokenStream<'a>
     }
 }
 
-impl Parse for Box<CommandLineExpr> {
+impl<'a, T: TokenStream<'a> + Clone> Parse for T {
     type ParserError = String;
 
-    fn parse<'a>(input: impl TokenStream<'a>) -> Result<Option<Self>, Self::ParserError> {
-        let mut data = ParserData::new(input);
+    fn parse(self) -> Result<Option<Box<CommandLineExpr>>, Self::ParserError> {
+        let mut data = ParserData::new(self);
         data.parse()
     }
 }
@@ -164,7 +164,7 @@ fn test_cmdline_expr() {
     use matches::assert_matches;
     let input = "ls > file; cat < file";
     let tokens = input.tokenize().unwrap();
-    let mut parser = ParserData::new(tokens.iter());
+    let mut parser = ParserData::new(tokens.get_stream());
     assert_matches!(
         parser.parse().unwrap().unwrap(),
         box CommandLineExpr::Type3(

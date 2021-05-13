@@ -1,38 +1,40 @@
 use crate::parser::*;
 use std::{collections::VecDeque, fmt, mem};
 
-const fn get_symbols() -> [&'static str; 10] {
-    // reverse sort for longest match rule
-    // m.sort_by(|a, b| b.cmp(a));
-    ["&&", ";", "&", "|", ">>", "<<", "<", ">", "||", "\n"]
-}
+fn try_extract_symbol_at_start(line: &str) -> Option<&'static str> {
+    fn get_symbols() -> [&'static str; 10] {
+        // reverse sort for longest match rule
+        let mut m =["&&", ";", "&", "|", ">>", "<<", "<", ">", "||", "\n"];
+        m.sort_by(|a, b| b.cmp(a));
+        m
+    }
 
-const SYMBOLS:[&str; 10] = get_symbols();
-
-fn starts_with_symbol(line: &str) -> Option<&'static str> {
-    SYMBOLS
+    get_symbols()
         .iter()
         .find(|&&sym| line.starts_with(sym)).copied()
 }
 
-pub struct TokenContainer<'a> {
-    token_list: VecDeque<Token<'a>>,
+pub struct Tokens<'a> (VecDeque<Token<'a>>);
+
+pub trait Tokenizer {
+    fn tokenize(&self) -> Result<Tokens<'_>, String>;
 }
 
-impl fmt::Debug for TokenContainer<'_> {
+impl fmt::Debug for Tokens<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.token_list)
+        write!(f, "{:?}", self.0)
     }
 }
 
-impl<'a, T: Iterator<Item = &'a Token<'a>> + Clone> TokenStream<'a> for T {}
+impl<'a, T> TokenStream<'a> for T 
+    where T: Iterator<Item = &'a Token<'a>> + Clone {}
 
-impl TokenContainer<'_> {
+impl Tokens<'_> {
     // join literals, flatten glob characters
     // glob flatten -> NOT IMPLEMENTED
     fn flatten(mut self) -> Self {
         // turn Token::QuotedString into Token::VarString
-        for tok in &mut self.token_list {
+        for tok in &mut self.0 {
             if let Token::QuotedString(_) = *tok {
                 let quoted_token = mem::replace(tok, Token::default());
                 if let Token::QuotedString(s) = quoted_token {
@@ -43,13 +45,13 @@ impl TokenContainer<'_> {
 
         // stitch adjacent VarStrings without seperation characters
         let mut i = 0;
-        while !self.token_list.is_empty() && i != self.token_list.len() - 1 {
-            match (&self.token_list[i], &self.token_list[i + 1]) {
+        while !self.0.is_empty() && i != self.0.len() - 1 {
+            match (&self.0[i], &self.0[i + 1]) {
                 (Token::VarString(_), Token::VarString(_)) => {
-                    let m = self.token_list.remove(i + 1).unwrap();
+                    let m = self.0.remove(i + 1).unwrap();
 
                     if let Token::VarString(m) = m {
-                        if let Token::VarString(ref mut s) = self.token_list[i] {
+                        if let Token::VarString(ref mut s) = self.0[i] {
                             s.to_mut().push_str(&m);
                         }
                     }
@@ -59,24 +61,20 @@ impl TokenContainer<'_> {
         }
 
         // remove newline and whitespace
-        self.token_list
+        self.0
             .retain(|tok| *tok != Token::WhiteSpace && *tok != Token::Symbol("\n"));
 
         self
     }
 
     pub fn get_stream(&self) -> impl TokenStream<'_>{
-        self.token_list.iter()
+        self.0.iter()
     }
 }
 
-pub trait Tokenizer {
-    fn tokenize(&self) -> Result<TokenContainer<'_>, String>;
-}
-
 impl Tokenizer for str {
-    fn tokenize(&self) -> Result<TokenContainer<'_>, String> {
-        let mut token_list: VecDeque<Token<'_>> = VecDeque::new();
+    fn tokenize(&self) -> Result<Tokens<'_>, String> {
+        let mut tokens: VecDeque<Token<'_>> = VecDeque::new();
         let mut it = self.chars().enumerate().peekable();
 
         let mut start = 0;
@@ -100,7 +98,7 @@ impl Tokenizer for str {
                 }
                 _ => {
                     let remaining_str = &self[i..];
-                    if let Some(s) = starts_with_symbol(remaining_str) {
+                    if let Some(s) = try_extract_symbol_at_start(remaining_str) {
                         Some(Token::Symbol(s))
                     } else {
                         if !capture_state {
@@ -115,29 +113,27 @@ impl Tokenizer for str {
             if capture_state && current_token.is_some() {
                 capture_state = false;
                 let end = i;
-                token_list.push_back(Token::VarString((&self[start..end]).into()));
+                tokens.push_back(Token::VarString((&self[start..end]).into()));
             }
 
             match current_token {
                 Some(Token::WhiteSpace) => {
                     // ignore duplicates whitespace
-                    if !token_list.is_empty() && token_list.back() != Some(&Token::WhiteSpace) {
-                        token_list.push_back(Token::WhiteSpace);
+                    if !tokens.is_empty() && tokens.back() != Some(&Token::WhiteSpace) {
+                        tokens.push_back(Token::WhiteSpace);
                     }
                 }
                 Some(tok) => {
-                    token_list.push_back(tok);
+                    tokens.push_back(tok);
                 }
                 None => (),
             }
         }
         if capture_state {
-            token_list.push_back(Token::VarString((&self[start..]).into()));
+            tokens.push_back(Token::VarString((&self[start..]).into()));
         }
 
-        Ok(TokenContainer {
-            token_list,
-        }.flatten())
+        Ok(Tokens(tokens).flatten())
     }
 }
 
@@ -161,7 +157,7 @@ fn test_tokenizer() {
 #[test]
 fn test_symbol_presence() {
     let string = "<< Help";
-    println!("starts with {:?}", starts_with_symbol(string));
-    assert!(starts_with_symbol(string) == Some("<<"));
-    assert!(starts_with_symbol(&string[2..]) == None);
+    println!("starts with {:?}", try_extract_symbol_at_start(string));
+    assert!(try_extract_symbol_at_start(string) == Some("<<"));
+    assert!(try_extract_symbol_at_start(&string[2..]) == None);
 }
